@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Librerie necessari
+# Import libraries
 import argparse
 import h5py
 import numpy as np
@@ -8,9 +8,8 @@ import os
 import pandas as pd
 import sys
 import wfdb
-import shutil
 
-# Funzioni utili
+# Utils
 def is_integer(x):
     try:
         int(x)
@@ -29,38 +28,26 @@ def sanitize_boolean_value(x):
     else:
         raise ValueError(f'Invalid boolean value: {x}')
 
-
-#ISTRUZIONI PER USARE LO SCRIPT:
-
-# python preprocessing_SaMi-Trop.py \
-#  -i PERCORSO_FILE_HDF5 \
-#  -d PERCORSO_FILE_CSV \
-#  -o PERCORSO_CARTELLA_OUTPUT \
-#  -c NUMERO_DATI_DA_PREPROCESSARE \
-#  --clean_output \    (se si vuole prima svuotare la cartella)
-#  --skip_existing     (se si vogliono aggiungere altri dati a quelli che già ci sono, saltando
-#                       quelli che ci sono già)
-
-#python preprocessing_SaMi-Trop.py \
-#  -i data/row/exams.hdf5 \       
-#  -d data/row/exams.csv \
-#  -o data/preprocessed
-
-
 def get_parser():
-    parser = argparse.ArgumentParser(description='Prepare the SaMi-Trop dataset for the Challenge.')
-    parser.add_argument('-i', '--signal_file', type=str, required=True)
-    parser.add_argument('-d', '--demographics_file', type=str, required=True)
-    parser.add_argument('-o', '--output_path', type=str, required=True)
+    """ Create an argument parser for the preprocessing script. """
+    description = "Preprocessing script for SaMi-Trop dataset.\n\n"
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-i', '--signal_file', type=str, required=True,
+                        help='Path to the HDF5 signal file')
+    parser.add_argument('-d', '--demographics_file', type=str, required=True,
+                        help='Path to the CSV demographics file')
+    parser.add_argument('-o', '--output_path', type=str, required=True,
+                        help='Path to the output folder')
     parser.add_argument('-c', '--count', type=int, required=False, default=None,
-                        help='Numero massimo di dati da preprocessare (default: tutti)')
+                        help='Maximum number of data to preprocess (default: all)')
     parser.add_argument('--clean_output', action='store_true',
-                        help='Pulisce la cartella di output prima di iniziare')
+                        help='Clean the output folder before starting')
     parser.add_argument('--skip_existing', action='store_true',
-                        help='Salta i record già presenti nella cartella di output')
+                        help='Skip records already present in the output folder')
     return parser
 
 def fix_checksums(record, checksums=None):
+    """ Fix the checksums from the Python WFDB library. """
     if checksums is None:
         x = wfdb.rdrecord(record, physical=False)
         signals = np.asarray(x.d_signal)
