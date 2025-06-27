@@ -40,6 +40,10 @@ def _fix_sampling_rate(signal, labels, limit=SAMPLE_LIMIT):
     if labels.get('Source') == 'PTB-XL':
         signal = resample_poly(signal, up=4, down=5, axis=0)
     signal = signal[:limit, :]  # Limit the number of samples
+    if signal.shape[0] < limit:
+        # If the signal has fewer samples than the limit, pad with zeros
+        padding = np.zeros((limit - signal.shape[0], signal.shape[1]))
+        signal = np.vstack((signal, padding))
     
     # Normalize each channel independently between -1 and 1
     for i in range(signal.shape[1]):
@@ -71,7 +75,7 @@ def load_dataset(dataset_path, n=None, randomness=False, verbose=False):
         data, labels = _load_wfdb_record(record_path)
         if data is not None:
             if verbose:
-                print(f"Loaded {filename}: {labels.get('Chagas label')} - {labels.get('Source')}")
+                print(f"Loaded {filename}: {labels.get('Chagas label')} - {labels}")
             all_data.append(data)
             all_labels.append(labels.get('Chagas label'))
     
