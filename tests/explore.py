@@ -6,7 +6,7 @@ from src.preprocessing.tf_dataset_loader import load_dataset
 def explore_dataset(dataset_path):
     """ Explore the dataset by loading and printing basic information. """
     print("loading dataset from:", dataset_path)
-    data, labels = load_dataset(dataset_path, n=6, randomness=True)
+    data, labels = load_dataset(dataset_path, n=6, randomness=True, verbose=True)
     
     # Plot all signals
     print(f"Total samples loaded: {len(data)}")
@@ -19,7 +19,7 @@ def explore_dataset(dataset_path):
     for i in range(len(data)):
         row = i // 3
         col = i % 3
-        axes[row, col].plot(data[i][:, 2], label='Channel 1')
+        axes[row, col].plot(data[i][:,6], label='Channel 1')
         axes[row, col].set_title(f'Signal {i+1} (Label: {labels[i]})')
         axes[row, col].set_xlabel('Sample Index')
         axes[row, col].set_ylabel('Amplitude')
