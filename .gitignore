@@ -4,4 +4,4 @@ __pycache__/
 data/
 data/*
 !data/.gitkeep
-.DS_Store
+*.DS_Store
