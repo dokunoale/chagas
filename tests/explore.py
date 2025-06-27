@@ -35,4 +35,4 @@ if __name__ == "__main__":
         sys.exit(1)
     
     dataset_path = sys.argv[1]
-    explore_dataset(dataset_path)
+    X, y = load_dataset(dataset_path)
