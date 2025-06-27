@@ -39,10 +39,6 @@ def _parse_header_comments(header):
 def _fix_sampling_rate(signal, labels, limit=SAMPLE_LIMIT):
     if labels.get('Source') == 'PTB-XL':
         signal = resample_poly(signal, up=4, down=5, axis=0)
-        print(f"NEGATIVE shape: {signal.shape}")
-    else:
-        print(f"POSITIVE shape: {signal.shape}")
-
     signal = signal[:limit, :]  # Limit the number of samples
     
     # Normalize each channel independently between -1 and 1
@@ -58,22 +54,24 @@ def _load_wfdb_record(record_path):
         record = wfdb.rdrecord(record_path)
         header = wfdb.rdheader(record_path)
         labels = _parse_header_comments(header)
-        return _fix_sampling_rate(record.p_signal, labels), header, labels
+        return _fix_sampling_rate(record.p_signal, labels), labels
     except Exception as e:
         print(f"Error loading record {record_path}: {e}")
-        return None, None, None
+        return None, None
 
-def load_dataset(dataset_path, n=None, randomness=False):
+def load_dataset(dataset_path, n=None, randomness=False, verbose=False):
     """ Load all WFDB records from a dataset directory and return the data and labels. """
     all_data = []
     all_labels = []
-    filenames = [f for f in os.listdir(dataset_path) if f.endswith(DAT_EXTENSION)][:n if n is not None else None]
+    filenames = [f for f in os.listdir(dataset_path) if f.endswith(DAT_EXTENSION)]
     if randomness:
         np.random.shuffle(filenames)
-    for filename in filenames:
+    for filename in filenames[:n if n is not None else None]:
         record_path = os.path.join(dataset_path, filename[:-4])  # Remove .dat extension
-        data, _, labels = _load_wfdb_record(record_path)
+        data, labels = _load_wfdb_record(record_path)
         if data is not None:
+            if verbose:
+                print(f"Loaded {filename}: {labels.get('Chagas label')} - {labels.get('Source')}")
             all_data.append(data)
             all_labels.append(labels.get('Chagas label'))
     
