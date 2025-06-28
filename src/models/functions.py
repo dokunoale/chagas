@@ -125,50 +125,38 @@ import numpy as np
 
 def compare_classification_reports(report1, report2, labels=None, model_names=("Model 1", "Model 2")):
     """
-    Confronta due classification_report. Accetta sia stringhe (formato stampato) che dizionari (output_dict=True).
+    Confronta due classification_report (output_dict=True) e mostra una tabella con le metriche principali.
 
     Args:
-        report1 (str or dict): classification_report del primo modello.
-        report2 (str or dict): classification_report del secondo modello.
-        labels (list, optional): Lista di etichette da confrontare. Se None, usa tutte le classi trovate.
-        model_names (tuple): nomi dei due modelli.
+        report1 (dict): classification_report del primo modello (output_dict=True)
+        report2 (dict): classification_report del secondo modello (output_dict=True)
+        labels (list, optional): lista di classi da mostrare. Se None, usa tutte le classi trovate.
+        model_names (tuple): tuple con i nomi dei due modelli da mostrare nella tabella.
 
-    Output:
-        Tabella di confronto tra precision, recall, f1-score.
+    Stampa una tabella con precision, recall, f1-score per ogni classe e macro/weighted avg.
     """
 
-    def parse_report(report):
-        if isinstance(report, str):
-            # Converti stringa in dizionario approssimato (non ideale ma funziona in casi semplici)
-            raise ValueError("Errore: per confrontare i report, passare `output_dict=True` nel classification_report.")
-        elif isinstance(report, dict):
-            return report
-        else:
-            raise TypeError("Il report deve essere una stringa o un dizionario.")
-
-    r1 = parse_report(report1)
-    r2 = parse_report(report2)
-
+    # Se labels non specificato, prendi tutte le chiavi eccetto 'accuracy'
     if labels is None:
-        labels = [k for k in r1.keys() if k not in ('accuracy', 'macro avg', 'weighted avg')]
+        labels = [k for k in report1.keys() if k not in ('accuracy', 'macro avg', 'weighted avg')]
 
     rows = []
-    header = ["Classe",
+    header = ["Classe", 
               f"{model_names[0]} Precision", f"{model_names[1]} Precision",
               f"{model_names[0]} Recall",    f"{model_names[1]} Recall",
               f"{model_names[0]} F1-Score",  f"{model_names[1]} F1-Score"]
 
     for label in labels + ['macro avg', 'weighted avg']:
-        v1 = r1.get(label, {})
-        v2 = r2.get(label, {})
+        r1 = report1.get(label, {})
+        r2 = report2.get(label, {})
         row = [
             label,
-            f"{v1.get('precision', np.nan):.3f}" if v1 else "N/A",
-            f"{v2.get('precision', np.nan):.3f}" if v2 else "N/A",
-            f"{v1.get('recall', np.nan):.3f}" if v1 else "N/A",
-            f"{v2.get('recall', np.nan):.3f}" if v2 else "N/A",
-            f"{v1.get('f1-score', np.nan):.3f}" if v1 else "N/A",
-            f"{v2.get('f1-score', np.nan):.3f}" if v2 else "N/A",
+            f"{r1.get('precision', np.nan):.3f}" if r1 else "N/A",
+            f"{r2.get('precision', np.nan):.3f}" if r2 else "N/A",
+            f"{r1.get('recall', np.nan):.3f}" if r1 else "N/A",
+            f"{r2.get('recall', np.nan):.3f}" if r2 else "N/A",
+            f"{r1.get('f1-score', np.nan):.3f}" if r1 else "N/A",
+            f"{r2.get('f1-score', np.nan):.3f}" if r2 else "N/A",
         ]
         rows.append(row)
 
