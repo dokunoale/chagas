@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 def focal_loss(gamma=2., alpha=0.25):
     def focal_loss_fixed(y_true, y_pred):
@@ -25,4 +27,72 @@ def make_callback(name):
     return callback
 
 
+def plot_training_metrics(history):
+    """
+    Plotta Accuracy e AUC per training e validation da un oggetto history di Keras.
 
+    Args:
+        history: History object restituito da model.fit()
+    """
+    acc = history.history['accuracy']
+    val_acc = history.history['val_accuracy']
+    auc = history.history['auc']
+    val_auc = history.history['val_auc']
+    epochs = range(1, len(acc) + 1)
+
+    plt.figure(figsize=(12, 5))
+
+    # Plot Accuracy
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, acc, 'bo-', label='Training Accuracy')
+    plt.plot(epochs, val_acc, 'ro-', label='Validation Accuracy')
+    plt.title('Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+
+    # Plot AUC
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, auc, 'bo-', label='Training AUC')
+    plt.plot(epochs, val_auc, 'ro-', label='Validation AUC')
+    plt.title('AUC')
+    plt.xlabel('Epochs')
+    plt.ylabel('AUC')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+    
+
+
+def find_optimal_threshold(y_true, y_pred_proba):
+    """
+    Calcola la curva ROC e restituisce la soglia ottimale che massimizza TPR - FPR.
+
+    Args:
+        y_true: array-like, etichette vere (0/1)
+        y_pred_proba: array-like, probabilità predette per la classe positiva
+
+    Returns:
+        optimal_threshold: float, soglia ottimale
+    """
+    fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba)
+    optimal_idx = (tpr - fpr).argmax()
+    optimal_threshold = thresholds[optimal_idx]
+    print(f"Soglia ottimale: {optimal_threshold:.3f}")
+    return optimal_threshold
+
+def plot_confusion_matrix(y_true, y_pred_binary, labels=["Negativo", "Positivo"]):
+    """
+    Calcola e visualizza la matrice di confusione.
+
+    Args:
+        y_true: array-like, etichette vere
+        y_pred_binary: array-like, predizioni binarie (0/1)
+        labels: lista di stringhe, etichette per le classi (default ["Negativo", "Positivo"])
+    """
+    cm = confusion_matrix(y_true, y_pred_binary)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
+    disp.plot(cmap=plt.cm.Blues)
+    plt.title("Matrice di Confusione")
+    plt.show()
