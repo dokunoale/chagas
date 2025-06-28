@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.metrics import roc_curve
+import tensorflow as tf
 
 def focal_loss(gamma=2.0, alpha=0.25):
     """
