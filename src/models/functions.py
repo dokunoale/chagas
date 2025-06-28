@@ -1,14 +1,36 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import roc_curve
 
-def focal_loss(gamma=2., alpha=0.25):
-    def focal_loss_fixed(y_true, y_pred):
+def focal_loss(gamma=2.0, alpha=0.25):
+    """
+    Ritorna una funzione di perdita di tipo Focal Loss per problemi di classificazione binaria.
+
+    Args:
+        gamma (float): Fattore di focalizzazione, che riduce il peso delle istanze facili da classificare.
+        alpha (float): Fattore di bilanciamento tra classi positive e negative.
+
+    Returns:
+        funzione di perdita personalizzata da usare con model.compile()
+    """
+    def loss(y_true, y_pred):
+        # Calcola la Binary Crossentropy
         bce = tf.keras.losses.binary_crossentropy(y_true, y_pred)
+
+        # Probabilità del target
         p_t = y_true * y_pred + (1 - y_true) * (1 - y_pred)
+
+        # Fattore di bilanciamento alpha
         alpha_factor = y_true * alpha + (1 - y_true) * (1 - alpha)
-        modulating_factor = tf.pow((1 - p_t), gamma)
-        return tf.reduce_mean(alpha_factor * modulating_factor * bce)
-    return focal_loss_fixed
+
+        # Fattore di modulazione focal loss
+        modulating_factor = tf.pow(1.0 - p_t, gamma)
+
+        # Perdita focalizzata
+        focal_loss_value = alpha_factor * modulating_factor * bce
+        return tf.reduce_mean(focal_loss_value)
+
+    return loss
 
 
 def make_callback(name):
@@ -82,16 +104,14 @@ def find_optimal_threshold(y_true, y_pred_proba):
     print(f"Soglia ottimale: {optimal_threshold:.3f}")
     return optimal_threshold
 
-def plot_confusion_matrix(y_true, y_pred_binary, labels=["Negativo", "Positivo"]):
+def show_confusion_matrix(cm, labels=["Negativo", "Positivo"]):
     """
-    Calcola e visualizza la matrice di confusione.
+    Visualizza una matrice di confusione già calcolata.
 
     Args:
-        y_true: array-like, etichette vere
-        y_pred_binary: array-like, predizioni binarie (0/1)
-        labels: lista di stringhe, etichette per le classi (default ["Negativo", "Positivo"])
+        cm (np.ndarray): matrice di confusione
+        labels (list): etichette delle classi
     """
-    cm = confusion_matrix(y_true, y_pred_binary)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
     disp.plot(cmap=plt.cm.Blues)
     plt.title("Matrice di Confusione")
