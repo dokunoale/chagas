@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.metrics import roc_curve
 import tensorflow as tf
+from tabulate import tabulate
 
 def focal_loss(gamma=2.0, alpha=0.25):
     """
@@ -87,7 +88,6 @@ def plot_training_metrics(history):
     plt.show()
     
 
-
 def find_optimal_threshold(y_true, y_pred_proba):
     """
     Calcola la curva ROC e restituisce la soglia ottimale che massimizza TPR - FPR.
@@ -117,3 +117,44 @@ def show_confusion_matrix(cm, labels=["Negativo", "Positivo"]):
     disp.plot(cmap=plt.cm.Blues)
     plt.title("Matrice di Confusione")
     plt.show()
+    
+
+def compare_classification_reports(report1, report2, labels=None, model_names=("Model 1", "Model 2")):
+    """
+    Confronta due classification_report (output_dict=True) e mostra una tabella con le metriche principali.
+
+    Args:
+        report1 (dict): classification_report del primo modello (output_dict=True)
+        report2 (dict): classification_report del secondo modello (output_dict=True)
+        labels (list, optional): lista di classi da mostrare. Se None, usa tutte le classi trovate.
+        model_names (tuple): tuple con i nomi dei due modelli da mostrare nella tabella.
+
+    Stampa una tabella con precision, recall, f1-score per ogni classe e macro/weighted avg.
+    """
+    import numpy as np
+    
+    # Se labels non specificato, prendi tutte le chiavi eccetto 'accuracy'
+    if labels is None:
+        labels = [k for k in report1.keys() if k not in ('accuracy', 'macro avg', 'weighted avg')]
+
+    rows = []
+    header = ["Classe", 
+              f"{model_names[0]} Precision", f"{model_names[1]} Precision",
+              f"{model_names[0]} Recall",    f"{model_names[1]} Recall",
+              f"{model_names[0]} F1-Score",  f"{model_names[1]} F1-Score"]
+
+    for label in labels + ['macro avg', 'weighted avg']:
+        r1 = report1.get(label, {})
+        r2 = report2.get(label, {})
+        row = [
+            label,
+            f"{r1.get('precision', np.nan):.3f}" if r1 else "N/A",
+            f"{r2.get('precision', np.nan):.3f}" if r2 else "N/A",
+            f"{r1.get('recall', np.nan):.3f}" if r1 else "N/A",
+            f"{r2.get('recall', np.nan):.3f}" if r2 else "N/A",
+            f"{r1.get('f1-score', np.nan):.3f}" if r1 else "N/A",
+            f"{r2.get('f1-score', np.nan):.3f}" if r2 else "N/A",
+        ]
+        rows.append(row)
+
+    print(tabulate(rows, headers=header, tablefmt="grid"))
