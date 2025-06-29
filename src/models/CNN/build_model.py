@@ -45,7 +45,7 @@ def build_conv_blocks(inputs, dropout_rate=0.3, use_se=True):
     return x
 
 # Model
-def build_cnn_ecg_model(input_shape=(2800, 12), dropout_rate=0.3, use_se=True):
+def build_cnn_ecg_model(input_shape=(2800, 12), dropout_rate=0.3, use_se=False):
     inputs = layers.Input(shape=input_shape)
     x = build_conv_blocks(inputs, dropout_rate=dropout_rate, use_se=use_se)
 
