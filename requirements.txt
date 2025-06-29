@@ -4,3 +4,4 @@ h5py==3.12.1
 scikit-learn==1.6.0
 wfdb==4.1.2
 joblib==1.4.2
+tensorflow==2.15.0
