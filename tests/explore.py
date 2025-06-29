@@ -19,9 +19,11 @@ def explore_dataset(dataset_path):
     for i in range(len(data)):
         row = i // 3
         col = i % 3
-        axes[row, col].plot(data[i][:,6], label='Channel 1')
+        # Create time axis in seconds (sampling rate = 400 Hz)
+        time_axis = [j / 400.0 for j in range(len(data[i]))]
+        axes[row, col].plot(time_axis, data[i][:,6], label='Channel 1')
         axes[row, col].set_title(f'Signal {i+1} (Label: {labels[i]})')
-        axes[row, col].set_xlabel('Sample Index')
+        axes[row, col].set_xlabel('Time (seconds)')
         axes[row, col].set_ylabel('Amplitude')
         axes[row, col].grid(True)
     
@@ -35,4 +37,4 @@ if __name__ == "__main__":
         sys.exit(1)
     
     dataset_path = sys.argv[1]
-    X, y = load_dataset(dataset_path)
+    explore_dataset(dataset_path)
