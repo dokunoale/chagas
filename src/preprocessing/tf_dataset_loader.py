@@ -86,3 +86,18 @@ def load_dataset(dataset_path, n=None, randomness=False, verbose=False):
     X_all = np.stack(all_data, axis=0)  # Shape: (n_files, n_samples, n_channels)
     y_all = np.array(all_labels)        # Shape: (n_files,)
     return X_all, y_all
+
+def concatenate_and_shuffle(positives_array, negatives_array):
+    """
+    Concatena due array numpy e li mescola casualmente.
+
+    Args:
+        positives_array (np.ndarray): Array con esempi positivi.
+        negatives_array (np.ndarray): Array con esempi negativi.
+
+    Returns:
+        np.ndarray: Array concatenato e mescolato.
+    """
+    combined = np.concatenate((positives_array, negatives_array), axis=0)
+    np.random.shuffle(combined)
+    return combined
