@@ -20,9 +20,9 @@ def _parse_header_comments(header):
                 key, value = comment.split(':', 1)
                 comments_dict[key.strip()] = value.strip()
                 if value.strip().lower() == 'true':
-                    comments_dict[key.strip()] = True
+                    comments_dict[key.strip()] = 1
                 elif value.strip().lower() == 'false':
-                    comments_dict[key.strip()] = False
+                    comments_dict[key.strip()] = 0
                 elif value.strip().isdigit():
                     comments_dict[key.strip()] = int(value.strip())
                 elif value.strip().replace('.', '', 1).isdigit():
@@ -50,12 +50,9 @@ def _fix_sampling_rate(signal, labels, limit=SAMPLE_LIMIT):
 def _load_wfdb_record(record_path):
     """ Load a WFDB record and return the signal data, header, and labels."""
     try:
-        print("Loading record:", record_path)
         record = wfdb.rdrecord(record_path)
         header = wfdb.rdheader(record_path)
-        print("Parsing header for record:", record_path)
         labels = _parse_header_comments(header)
-        print("Fixing sample rate:")
         return _fix_sampling_rate(record.p_signal, labels), labels
     except Exception as e:
         print(f"Error loading record {record_path}: {e}")
