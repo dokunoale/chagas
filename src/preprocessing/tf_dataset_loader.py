@@ -19,19 +19,14 @@ def _parse_header_comments(header):
             if ':' in comment:
                 key, value = comment.split(':', 1)
                 comments_dict[key.strip()] = value.strip()
-                # Try to convert value to int, float, or bool if possible
-                if value.strip().lower() in ['true', 'false']:
-                    comments_dict[key.strip()] = value.strip().lower() == 'true'
-                else:
-                    try:
-                        num = int(value.strip())
-                        comments_dict[key.strip()] = num
-                    except ValueError:
-                        try:
-                            num = float(value.strip())
-                            comments_dict[key.strip()] = num
-                        except ValueError:
-                            pass
+                if value.strip().lower() == 'true':
+                    comments_dict[key.strip()] = True
+                elif value.strip().lower() == 'false':
+                    comments_dict[key.strip()] = False
+                elif value.strip().isdigit():
+                    comments_dict[key.strip()] = int(value.strip())
+                elif value.strip().replace('.', '', 1).isdigit():
+                    comments_dict[key.strip()] = float(value.strip())
             else:
                 comments_dict[comment] = None
     return comments_dict
@@ -87,17 +82,43 @@ def load_dataset(dataset_path, n=None, randomness=False, verbose=False):
     y_all = np.array(all_labels)        # Shape: (n_files,)
     return X_all, y_all
 
-def concatenate_and_shuffle(positives_array, negatives_array):
+def concatenate_and_shuffle(positives, negatives):
     """
-    Concatena due array numpy e li mescola casualmente.
-
+    Efficiently concatenate and shuffle positive and negative samples.
+    
+    This function combines positive and negative datasets and shuffles them randomly
+    while minimizing memory usage by avoiding unnecessary array copies.
+    
     Args:
-        positives_array (np.ndarray): Array con esempi positivi.
-        negatives_array (np.ndarray): Array con esempi negativi.
-
+        positives (tuple): A tuple (X_pos, y_pos) containing positive samples and labels
+        negatives (tuple): A tuple (X_neg, y_neg) containing negative samples and labels
+    
     Returns:
-        np.ndarray: Array concatenato e mescolato.
+        tuple: A tuple (X_all, y_all) containing the shuffled combined dataset
+            - X_all: Combined and shuffled feature arrays
+            - y_all: Combined and shuffled label arrays
     """
-    combined = np.concatenate((positives_array, negatives_array), axis=0)
-    np.random.shuffle(combined)
-    return combined
+    X_pos, y_pos = positives
+    X_neg, y_neg = negatives
+    
+    # Get total size for pre-allocation
+    total_size = len(y_pos) + len(y_neg)
+    
+    # Generate shuffle indices once
+    indices = np.arange(total_size)
+    np.random.shuffle(indices)
+    
+    # Pre-allocate arrays with correct shape
+    X_all = np.empty((total_size,) + X_pos.shape[1:], dtype=X_pos.dtype)
+    y_all = np.empty(total_size, dtype=y_pos.dtype)
+    
+    # Fill arrays directly in shuffled order to avoid intermediate concatenation
+    pos_indices = indices < len(y_pos)
+    neg_indices = ~pos_indices
+    
+    X_all[pos_indices] = X_pos[indices[pos_indices]]
+    X_all[neg_indices] = X_neg[indices[neg_indices] - len(y_pos)]
+    y_all[pos_indices] = y_pos[indices[pos_indices]]
+    y_all[neg_indices] = y_neg[indices[neg_indices] - len(y_pos)]
+    
+    return X_all, y_all
