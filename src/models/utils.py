@@ -1,32 +1,160 @@
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import roc_curve
 import tensorflow as tf
+from tabulate import tabulate
+from sklearn.metrics import classification_report
 
-class LogSpectrogram(tf.keras.layers.Layer):
-    def __init__(self, frame_length=64, frame_step=32, fft_length=64, scale=1000.0, **kwargs):
-        super(LogSpectrogram, self).__init__(**kwargs)
-        self.frame_length = frame_length
-        self.frame_step = frame_step
-        self.fft_length = fft_length
-        self.scale = scale
+def focal_loss(gamma=2.0, alpha=0.25):
+    """
+    Ritorna una funzione di perdita di tipo Focal Loss per problemi di classificazione binaria.
 
-    def call(self, inputs):
-        spectrograms = []
-        for i in range(inputs.shape[-1]):  # For each lead
-            signal = inputs[..., i]
-            stft = tf.signal.stft(
-                signal,
-                frame_length=self.frame_length,
-                frame_step=self.frame_step,
-                fft_length=self.fft_length,
-                window_fn=tf.signal.hann_window,
-                pad_end=True
-            )
-            spectrogram = tf.abs(stft)
-            log_spectrogram = tf.math.log1p(self.scale * spectrogram)
-            spectrograms.append(log_spectrogram)
+    Args:
+        gamma (float): Fattore di focalizzazione, che riduce il peso delle istanze facili da classificare.
+        alpha (float): Fattore di bilanciamento tra classi positive e negative.
 
-        return tf.stack(spectrograms, axis=-1)
+    Returns:
+        funzione di perdita personalizzata da usare con model.compile()
+    """
+    def loss(y_true, y_pred):
+        # Calcola la Binary Crossentropy
+        bce = tf.keras.losses.binary_crossentropy(y_true, y_pred)
 
-    def compute_output_shape(self, input_shape):
-        time_dim = (input_shape[1] + self.frame_step - 1) // self.frame_step
-        freq_dim = self.fft_length // 2 + 1
-        return (input_shape[0], time_dim, freq_dim, 12)
+        # Probabilità del target
+        p_t = y_true * y_pred + (1 - y_true) * (1 - y_pred)
+
+        # Fattore di bilanciamento alpha
+        alpha_factor = y_true * alpha + (1 - y_true) * (1 - alpha)
+
+        # Fattore di modulazione focal loss
+        modulating_factor = tf.pow(1.0 - p_t, gamma)
+
+        # Perdita focalizzata
+        focal_loss_value = alpha_factor * modulating_factor * bce
+        return tf.reduce_mean(focal_loss_value)
+
+    return loss
+
+
+def make_callback(name):
+    
+    from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
+    
+    early_stop = EarlyStopping(monitor='val_auc', patience=5, mode='max', restore_best_weights=True)
+    reduce_lr = ReduceLROnPlateau(monitor='val_auc', factor=0.5, patience=3, mode='max')
+    checkpoint = ModelCheckpoint(f"{name}_best_model.h5",
+                             monitor='val_auc',
+                             mode='max',
+                             save_best_only=True,
+                             verbose=1)
+    
+    callback = [early_stop, reduce_lr, checkpoint]
+    return callback
+
+
+def plot_training_metrics(history):
+    """
+    Plotta Accuracy e AUC per training e validation da un oggetto history di Keras.
+
+    Args:
+        history: History object restituito da model.fit()
+    """
+    acc = history.history['accuracy']
+    val_acc = history.history['val_accuracy']
+    auc = history.history['auc']
+    val_auc = history.history['val_auc']
+    epochs = range(1, len(acc) + 1)
+
+    plt.figure(figsize=(12, 5))
+
+    # Plot Accuracy
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, acc, 'bo-', label='Training Accuracy')
+    plt.plot(epochs, val_acc, 'ro-', label='Validation Accuracy')
+    plt.title('Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+
+    # Plot AUC
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, auc, 'bo-', label='Training AUC')
+    plt.plot(epochs, val_auc, 'ro-', label='Validation AUC')
+    plt.title('AUC')
+    plt.xlabel('Epochs')
+    plt.ylabel('AUC')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+    
+
+def find_optimal_threshold(y_true, y_pred_proba):
+    """
+    Calcola la curva ROC e restituisce la soglia ottimale che massimizza TPR - FPR.
+
+    Args:
+        y_true: array-like, etichette vere (0/1)
+        y_pred_proba: array-like, probabilità predette per la classe positiva
+
+    Returns:
+        optimal_threshold: float, soglia ottimale
+    """
+    fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba)
+    optimal_idx = (tpr - fpr).argmax()
+    optimal_threshold = thresholds[optimal_idx]
+    print(f"Soglia ottimale: {optimal_threshold:.3f}")
+    return optimal_threshold
+
+def show_confusion_matrix(cm, labels=["Negativo", "Positivo"]):
+    """
+    Visualizza una matrice di confusione già calcolata.
+
+    Args:
+        cm (np.ndarray): matrice di confusione
+        labels (list): etichette delle classi
+    """
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
+    disp.plot(cmap=plt.cm.Blues)
+    plt.title("Matrice di Confusione")
+    plt.show()
+    
+
+def compare_classification_reports(report1, report2, labels=None, model_names=("Model 1", "Model 2")):
+    """
+    Confronta due classification_report (output_dict=True) e mostra una tabella con le metriche principali.
+
+    Args:
+        report1 (dict): classification_report del primo modello (output_dict=True)
+        report2 (dict): classification_report del secondo modello (output_dict=True)
+        labels (list, optional): lista di classi da mostrare. Se None, usa tutte le classi trovate.
+        model_names (tuple): tuple con i nomi dei due modelli da mostrare nella tabella.
+
+    Stampa una tabella con precision, recall, f1-score per ogni classe e macro/weighted avg.
+    """
+
+    # Se labels non specificato, prendi tutte le chiavi eccetto 'accuracy'
+    if labels is None:
+        labels = [k for k in report1.keys() if k not in ('accuracy', 'macro avg', 'weighted avg')]
+
+    rows = []
+    header = ["Classe", 
+              f"{model_names[0]} Precision", f"{model_names[1]} Precision",
+              f"{model_names[0]} Recall",    f"{model_names[1]} Recall",
+              f"{model_names[0]} F1-Score",  f"{model_names[1]} F1-Score"]
+
+    for label in labels + ['macro avg', 'weighted avg']:
+        r1 = report1.get(label, {})
+        r2 = report2.get(label, {})
+        row = [
+            label,
+            f"{r1.get('precision', np.nan):.3f}" if r1 else "N/A",
+            f"{r2.get('precision', np.nan):.3f}" if r2 else "N/A",
+            f"{r1.get('recall', np.nan):.3f}" if r1 else "N/A",
+            f"{r2.get('recall', np.nan):.3f}" if r2 else "N/A",
+            f"{r1.get('f1-score', np.nan):.3f}" if r1 else "N/A",
+            f"{r2.get('f1-score', np.nan):.3f}" if r2 else "N/A",
+        ]
+        rows.append(row)
+
+    print(tabulate(rows, headers=header, tablefmt="grid"))
