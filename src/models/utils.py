@@ -42,7 +42,7 @@ def make_callback(name):
     
     early_stop = EarlyStopping(monitor='val_auc', patience=5, mode='max', restore_best_weights=True)
     reduce_lr = ReduceLROnPlateau(monitor='val_auc', factor=0.5, patience=3, mode='max')
-    checkpoint = ModelCheckpoint(f"{name}_best_model.h5",
+    checkpoint = ModelCheckpoint(f"{name}_best_model.keras",
                              monitor='val_auc',
                              mode='max',
                              save_best_only=True,
