@@ -14,10 +14,12 @@ def build_ecg_model_with_spectrogram(
 
     # 2) Conv blocks with padding='same' to avoid dimension collapse
     x = layers.Conv2D(96, kernel_size=7, strides=2, padding='same')(x)
+    x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     x = layers.MaxPooling2D(pool_size=3, strides=2, padding='same')(x)
 
     x = layers.Conv2D(256, kernel_size=5, strides=2, padding='same')(x)
+    x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     x = layers.MaxPooling2D(pool_size=3, strides=2, padding='same')(x)
 
