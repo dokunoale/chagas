@@ -40,9 +40,9 @@ def make_callback(name):
     
     from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
     
-    early_stop = EarlyStopping(monitor='val_auc', patience=5, mode='max', restore_best_weights=True)
+    early_stop = EarlyStopping(monitor='val_auc', patience=8, mode='max', restore_best_weights=True)
     reduce_lr = ReduceLROnPlateau(monitor='val_auc', factor=0.5, patience=3, mode='max')
-    checkpoint = ModelCheckpoint(f"{name}_best_model.h5",
+    checkpoint = ModelCheckpoint(f"{name}_best_model.keras",
                              monitor='val_auc',
                              mode='max',
                              save_best_only=True,
@@ -52,41 +52,58 @@ def make_callback(name):
     return callback
 
 
+import matplotlib.pyplot as plt
+
 def plot_training_metrics(history):
     """
-    Plotta Accuracy e AUC per training e validation da un oggetto history di Keras.
+    Plotta Accuracy, AUC e Loss per training e validation da un oggetto history di Keras.
 
     Args:
         history: History object restituito da model.fit()
     """
-    acc = history.history['accuracy']
-    val_acc = history.history['val_accuracy']
-    auc = history.history['auc']
-    val_auc = history.history['val_auc']
-    epochs = range(1, len(acc) + 1)
+    acc = history.history.get('accuracy')
+    val_acc = history.history.get('val_accuracy')
+    auc = history.history.get('auc')
+    val_auc = history.history.get('val_auc')
+    loss = history.history.get('loss')
+    val_loss = history.history.get('val_loss')
+    epochs = range(1, len(acc) + 1) if acc else range(1, len(loss) + 1)
 
-    plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(18, 5))
 
     # Plot Accuracy
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs, acc, 'bo-', label='Training Accuracy')
-    plt.plot(epochs, val_acc, 'ro-', label='Validation Accuracy')
-    plt.title('Accuracy')
-    plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    plt.legend()
+    if acc and val_acc:
+        plt.subplot(1, 3, 1)
+        plt.plot(epochs, acc, 'bo-', label='Training Accuracy')
+        plt.plot(epochs, val_acc, 'ro-', label='Validation Accuracy')
+        plt.title('Accuracy')
+        plt.xlabel('Epochs')
+        plt.ylabel('Accuracy')
+        plt.legend()
 
     # Plot AUC
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs, auc, 'bo-', label='Training AUC')
-    plt.plot(epochs, val_auc, 'ro-', label='Validation AUC')
-    plt.title('AUC')
-    plt.xlabel('Epochs')
-    plt.ylabel('AUC')
-    plt.legend()
+    if auc and val_auc:
+        plt.subplot(1, 3, 2)
+        plt.plot(epochs, auc, 'bo-', label='Training AUC')
+        plt.plot(epochs, val_auc, 'ro-', label='Validation AUC')
+        plt.title('AUC')
+        plt.xlabel('Epochs')
+        plt.ylabel('AUC')
+        plt.legend()
+
+    # Plot Loss
+    if loss and val_loss:
+        plt.subplot(1, 3, 3)
+        plt.plot(epochs, loss, 'bo-', label='Training Loss')
+        plt.plot(epochs, val_loss, 'ro-', label='Validation Loss')
+        plt.title('Loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
 
     plt.tight_layout()
     plt.show()
+
     
 
 def find_optimal_threshold(y_true, y_pred_proba):
