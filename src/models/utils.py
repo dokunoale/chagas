@@ -42,9 +42,9 @@ def make_callback(name):
     
     
     callbacks = [
-    tf.keras.callbacks.ModelCheckpoint(F"{name}best_model.keras", monitor="val_auc", mode="max", save_best_only=True),
-    tf.keras.callbacks.EarlyStopping(monitor="val_auc", mode="max", patience=7, restore_best_weights=True),
-    tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=3, min_lr=1e-6),
+    ModelCheckpoint(F"{name}_best_model.keras", monitor="val_auc", mode="max", save_best_only=True, verbose=1),
+    EarlyStopping(monitor="val_auc", mode="max", patience=7, restore_best_weights=True),
+    ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=3, min_lr=1e-6),
     ]
     
     return callbacks
