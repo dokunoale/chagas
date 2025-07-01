@@ -40,7 +40,7 @@ def make_callback(name):
     
     from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
     
-    early_stop = EarlyStopping(monitor='val_auc', patience=5, mode='max', restore_best_weights=True)
+    early_stop = EarlyStopping(monitor='val_auc', patience=8, mode='max', restore_best_weights=True)
     reduce_lr = ReduceLROnPlateau(monitor='val_auc', factor=0.5, patience=3, mode='max')
     checkpoint = ModelCheckpoint(f"{name}_best_model.keras",
                              monitor='val_auc',
