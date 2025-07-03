@@ -51,9 +51,6 @@ def make_callback(name):
     callback = [early_stop, reduce_lr, checkpoint]
     return callback
 
-
-import matplotlib.pyplot as plt
-
 def plot_training_metrics(history):
     """
     Plotta Accuracy, AUC e Loss per training e validation da un oggetto history di Keras.
@@ -123,6 +120,7 @@ def find_optimal_threshold(y_true, y_pred_proba):
     print(f"Soglia ottimale: {optimal_threshold:.3f}")
     return optimal_threshold
 
+
 def show_confusion_matrix(cm, labels=["Negativo", "Positivo"]):
     """
     Visualizza una matrice di confusione già calcolata.
@@ -175,3 +173,90 @@ def compare_classification_reports(report1, report2, labels=None, model_names=("
         rows.append(row)
 
     print(tabulate(rows, headers=header, tablefmt="grid"))
+
+
+def show_spectrogram_from_sample(model, sample):
+    """
+    Displays the spectrogram output from the LogSpectrogram layer using a single sample.
+
+    Parameters:
+        model: tf.keras.Model
+            The full CRNN model that includes the LogSpectrogram layer.
+        sample: np.ndarray or tf.Tensor
+            One ECG sample of shape (2800, 12).
+    """
+    import matplotlib.pyplot as plt
+
+    # Get the LogSpectrogram layer output
+    spectrogram_model = tf.keras.Model(inputs=model.input, outputs=model.get_layer(index=1).output)
+
+    # Prepare sample: add batch dimension
+    sample = tf.expand_dims(sample, axis=0)  # shape: (1, 2800, 12)
+
+    # Get spectrogram output
+    spectrogram = spectrogram_model(sample)  # shape: [1, time, freq, 12]
+    spectrogram = spectrogram[0]  # remove batch dimension → [time, freq, 12]
+
+    # Display each lead's spectrogram
+    num_leads = spectrogram.shape[-1]
+    fig, axes = plt.subplots(3, 4, figsize=(20, 10))
+    fig.suptitle("LogSpectrogram Output for Each ECG Lead")
+
+    for i in range(num_leads):
+        ax = axes[i // 4, i % 4]
+        ax.imshow(spectrogram[..., i].numpy().T, aspect='auto', origin='lower', cmap='magma')
+        ax.set_title(f"Lead {i+1}")
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Frequency")
+
+    plt.tight_layout()
+    plt.show()
+
+
+def show_raw_ecg_from_sample(sample, title="Raw ECG Signal for Each Lead", lead_names=None):
+    """
+    Displays the raw ECG signal for each lead using a single sample.
+
+    Parameters:
+        sample: np.ndarray or tf.Tensor
+            One ECG sample of shape (2800, 12).
+        title: str, optional
+            Title for the entire figure. Default is "Raw ECG Signal for Each Lead".
+        lead_names: list of str, optional
+            Names for each lead. If None, uses "Lead 1", "Lead 2", etc.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import tensorflow as tf
+
+    # Convert to numpy if it's a tensor
+    if hasattr(sample, 'numpy'):
+        sample = sample.numpy()
+
+    # Ensure we have the right shape
+    if len(sample.shape) == 3 and sample.shape[0] == 1:
+        sample = sample[0]  # Remove batch dimension if present
+
+    # Default lead names
+    if lead_names is None:
+        lead_names = [f"Lead {i+1}" for i in range(12)]
+
+    # Create time axis (assuming 500 Hz sampling rate for 2800 samples = 5.6 seconds)
+    time = np.linspace(0, len(sample) / 500, len(sample))
+
+    # Display each lead's raw signal
+    num_leads = sample.shape[-1]
+    fig, axes = plt.subplots(3, 4, figsize=(20, 10))
+    fig.suptitle(title, fontsize=16)
+
+    for i in range(num_leads):
+        ax = axes[i // 4, i % 4]
+        ax.plot(time, sample[:, i], linewidth=0.8, color='blue')
+        ax.set_title(lead_names[i])
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Amplitude")
+        ax.grid(True, alpha=0.3)
+        ax.set_ylim(-1.1, 1.1)  # Assuming normalized signals
+
+    plt.tight_layout()
+    plt.show()
