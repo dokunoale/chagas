@@ -13,7 +13,7 @@ def build_ecg_gru_model(
     x = layers.Dropout(dropout_rate)(x)
 
     # Secondo livello LSTM bidirezionale (senza return_sequences)
-    x = layers.Bidirectional(layers.LSTM(gru_units))(x)
+    x = layers.Bidirectional(layers.GRU(gru_units))(x)
     x = layers.Dropout(dropout_rate)(x)
 
     # Dense layers
