@@ -9,7 +9,7 @@ def build_ecg_gru_model(
     inputs = layers.Input(shape=input_shape)  # (2800, 12)
 
     # Primo livello GRU bidirezionale
-    x = layers.Bidirectional(layers.GRU(gru_units, return_sequences=True))(x)
+    x = layers.Bidirectional(layers.GRU(gru_units, return_sequences=True))(inputs)
     x = layers.Dropout(dropout_rate)(x)
 
     # Secondo livello LSTM bidirezionale (senza return_sequences)
