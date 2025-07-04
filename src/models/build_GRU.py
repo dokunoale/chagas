@@ -1,19 +1,19 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
-def build_ecg_lstm_model(
+def build_ecg_gru_model(
     input_shape=(2800, 12),
-    lstm_units=128,
+    gru_units=128,
     dropout_rate=0.3
 ):
     inputs = layers.Input(shape=input_shape)  # (2800, 12)
 
-    # Primo livello LSTM bidirezionale
-    x = layers.Bidirectional(layers.LSTM(lstm_units, return_sequences=True))(x)
+    # Primo livello GRU bidirezionale
+    x = layers.Bidirectional(layers.GRU(gru_units, return_sequences=True))(x)
     x = layers.Dropout(dropout_rate)(x)
 
     # Secondo livello LSTM bidirezionale (senza return_sequences)
-    x = layers.Bidirectional(layers.LSTM(lstm_units))(x)
+    x = layers.Bidirectional(layers.LSTM(gru_units))(x)
     x = layers.Dropout(dropout_rate)(x)
 
     # Dense layers
