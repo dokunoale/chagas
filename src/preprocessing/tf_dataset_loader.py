@@ -172,8 +172,11 @@ class WfdbLoader():
         y_all = np.array(all_labels)        # Shape: (n_files,)
 
         for filter_func in self._filters:
-            X_all = filter_func(X_all)
-            
+            if verbose:
+                print(f"Applying filter: {filter_func.__name__}")
+            if callable(filter_func):
+                X_all = filter_func(X_all)
+
         return X_all, y_all
                 
 
