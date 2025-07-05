@@ -147,15 +147,19 @@ class WfdbLoader():
 
         if shuffle:
             np.random.shuffle(self.records)
+        
+        records_to_process = self.records[:limit if limit is not None else None]
+        
+        if verbose:
+            from tqdm import tqdm
+            records_to_process = tqdm(records_to_process, desc="Loading records", unit="file")
             
-        for record in self.records[:limit if limit is not None else None]:
+        for record in records_to_process:
             data, labels = _load_wfdb_record(record)
 
             if data is not None:
                 for filter_func in self.filters:
                     data = filter_func(data)
-                if verbose:
-                    print(f"Loaded {record}: {labels.get('Chagas label')} - {labels}")
                 all_data.append(data)
                 all_labels.append(labels.get('Chagas label'))
         
