@@ -120,7 +120,7 @@ def concatenate_and_shuffle(positives, negatives):
     
     return X_all, y_all
 
-class WfdbLoader():
+class WfdbLoader:
     """
     A class to load and preprocess WFDB datasets for machine learning tasks.
     

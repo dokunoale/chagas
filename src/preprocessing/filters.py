@@ -2,7 +2,7 @@ import numpy as np
 from scipy.signal import iirnotch, butter, filtfilt, lfilter
 
 class FiltfiltNoiseReducer:
-    def __init__(self, fs, iir_freq=50.0, butterworth_cutoff=0.5, lowpass_cutoff=None):
+    def __init__(self, fs, iir_freq=50.0, butterworth_cutoff=0.5, lowpass_cutoff=None, verbose=False):
         """
         Inizializza i filtri per la riduzione del rumore.
 
@@ -11,11 +11,13 @@ class FiltfiltNoiseReducer:
         - iir_freq: frequenza di taglio per il filtro notch (default 50.0 Hz)
         - butterworth_cutoff: frequenza di taglio per il filtro high-pass (default 0.5 Hz)
         - lowpass_cutoff: frequenza di taglio per un filtro low-pass opzionale (default None)
+        - verbose: se True, mostra una barra di avanzamento durante il filtraggio (default False)
         """
         self.fs = fs
         self.iir_freq = iir_freq
         self.butterworth_cutoff = butterworth_cutoff
         self.lowpass_cutoff = lowpass_cutoff
+        self.verbose = verbose
 
         Q = 30.0
         self.b_notch, self.a_notch = iirnotch(w0=iir_freq, Q=Q, fs=fs)
@@ -37,6 +39,11 @@ class FiltfiltNoiseReducer:
         - Un array numpy filtrato della stessa forma di inputs.
         """
         filtered_batch = []
+
+        if self.verbose:
+            from tqdm import tqdm
+            records_to_process = tqdm(inputs, desc="Filtering records - filtfilt", unit="record")
+
         for sample in inputs:  # sample shape: (time_steps, channels)
             channels = []
             for i in range(sample.shape[1]):
@@ -52,7 +59,7 @@ class FiltfiltNoiseReducer:
 
 
 class LfilterNoiseReducer:
-    def __init__(self, fs, iir_freq=50.0, butterworth_cutoff=0.5, lowpass_cutoff=None):
+    def __init__(self, fs, iir_freq=50.0, butterworth_cutoff=0.5, lowpass_cutoff=None, verbose=False):
         """
         Inizializza i filtri per la riduzione del rumore.
 
@@ -61,11 +68,13 @@ class LfilterNoiseReducer:
         - iir_freq: frequenza di taglio per il filtro notch (default 50.0 Hz)
         - butterworth_cutoff: frequenza di taglio per il filtro high-pass (default 0.5 Hz)
         - lowpass_cutoff: frequenza di taglio per un filtro low-pass opzionale (default None)
+        - verbose: se True, mostra una barra di avanzamento durante il filtraggio (default False)
         """
         self.fs = fs
         self.iir_freq = iir_freq
         self.butterworth_cutoff = butterworth_cutoff
         self.lowpass_cutoff = lowpass_cutoff
+        self.verbose = verbose
 
         Q = 30.0
         self.b_notch, self.a_notch = iirnotch(w0=iir_freq, Q=Q, fs=fs)
@@ -87,6 +96,12 @@ class LfilterNoiseReducer:
         - Un array numpy filtrato della stessa forma di inputs.
         """
         filtered_batch = []
+
+        if self.verbose:
+            from tqdm import tqdm
+            records_to_process = tqdm(inputs, desc="Filtering records - filtfilt", unit="record")
+
+
         for sample in inputs:  # sample shape: (time_steps, channels)
             channels = []
             for i in range(sample.shape[1]):
