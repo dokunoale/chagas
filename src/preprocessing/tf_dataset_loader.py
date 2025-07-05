@@ -161,11 +161,12 @@ class WfdbLoader:
             records_to_process = tqdm(records_to_process, desc="Loading records", unit="record")
             
         for record in records_to_process:
-            data, self._metadata = _load_wfdb_record(record)
+            data, labels = _load_wfdb_record(record)
 
             if data is not None:              
                 all_data.append(data)
-                all_labels.append(self._metadata.get(self._label))
+                all_labels.append(labels.get(self._label))
+                self._metadata.append(labels)
         
         # Stack the data
         X_all = np.stack(all_data, axis=0)  # Shape: (n_files, n_samples, n_channels)
