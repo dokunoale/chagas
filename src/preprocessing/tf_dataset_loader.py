@@ -1,4 +1,4 @@
-__all__ = ['load_dataset']
+__all__ = ['load_dataset', 'concatenate_and_shuffle', 'WfdbLoader']
 
 # import libraries
 import os
@@ -119,3 +119,57 @@ def concatenate_and_shuffle(positives, negatives):
     y_all[neg_indices] = y_neg[indices[neg_indices] - len(y_pos)]
     
     return X_all, y_all
+
+class WfdbLoader():
+    """
+    A class to load and preprocess WFDB datasets for machine learning tasks.
+    
+    This class allows adding multiple datasets, applying filters, and loading the data
+    as NumPy arrays with optional shuffling and limiting the number of samples.
+    """
+    
+    def __init__(self):
+        self.records = []
+        self.filters = []
+    
+    def add_dataset(self, dataset_path):
+        """ Add a dataset path to the loader. """
+        self.records.extend([os.path.join(dataset_path, f[:-4]) for f in os.listdir(dataset_path) if f.endswith(DAT_EXTENSION)])
+    
+    def add_filter(self, filter_func):
+        """ Add a filter function to be applied to the data. """
+        self.filters.append(filter_func)
+    
+    def load(self, shuffle=False, limit=None, verbose=False):
+        """ Load all datasets and apply filters. """
+        all_data = []
+        all_labels = []
+
+        if shuffle:
+            np.random.shuffle(self.records)
+            
+        for record in self.records[:limit if limit is not None else None]:
+            data, labels = _load_wfdb_record(record)
+
+            if data is not None:
+                for filter_func in self.filters:
+                    data = filter_func(data)
+                if verbose:
+                    print(f"Loaded {record}: {labels.get('Chagas label')} - {labels}")
+                all_data.append(data)
+                all_labels.append(labels.get('Chagas label'))
+        
+        # Stack the data
+        X_all = np.stack(all_data, axis=0)  # Shape: (n_files, n_samples, n_channels)
+        y_all = np.array(all_labels)        # Shape: (n_files,)
+        return X_all, y_all
+                
+
+"""
+# Example usage:
+# loader = WfdbLoader()
+# loader.add_filter(NoiseFilter())
+# loader.add_dataset('path/to/positive/dataset')
+# loader.add_dataset('path/to/negative/dataset')
+# loader.load(shuffle=True, limit=1000)
+# """
