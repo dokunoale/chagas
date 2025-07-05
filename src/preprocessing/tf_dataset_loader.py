@@ -140,7 +140,7 @@ class WfdbLoader():
     
     def add_filter(self, filter_func):
         """ Add a filter function to be applied to the data. """
-        self.filters.append(filter_func)
+        self._filters.append(filter_func)
 
     def get_metadata(self):
         """ Get metadata from the loaded records. """
@@ -164,7 +164,7 @@ class WfdbLoader():
             data, self._metadata = _load_wfdb_record(record)
 
             if data is not None:
-                for filter_func in self.filters:
+                for filter_func in self._filters:
                     data = filter_func(data)
                 
                 all_data.append(data)
