@@ -42,7 +42,7 @@ class FiltfiltNoiseReducer:
 
         if self.verbose:
             from tqdm import tqdm
-            records_to_process = tqdm(inputs, desc="Filtering records - filtfilt", unit="record")
+            inputs = tqdm(inputs, desc="Filtering records - filtfilt", unit="record")
 
         for sample in inputs:  # sample shape: (time_steps, channels)
             channels = []
@@ -99,8 +99,7 @@ class LfilterNoiseReducer:
 
         if self.verbose:
             from tqdm import tqdm
-            records_to_process = tqdm(inputs, desc="Filtering records - filtfilt", unit="record")
-
+            inputs = tqdm(inputs, desc="Filtering records - filtfilt", unit="record")
 
         for sample in inputs:  # sample shape: (time_steps, channels)
             channels = []
