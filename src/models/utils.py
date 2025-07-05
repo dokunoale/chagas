@@ -117,7 +117,7 @@ def find_optimal_threshold(y_true, y_pred_proba):
     fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba)
     optimal_idx = (tpr - fpr).argmax()
     optimal_threshold = thresholds[optimal_idx]
-    print(f"Soglia ottimale: {optimal_threshold:.3f}")
+    print(f"Optimal threshold: {optimal_threshold:.3f}")
     return optimal_threshold
 
 def show_confusion_matrix(cm, labels=["Negativo", "Positivo"]):
