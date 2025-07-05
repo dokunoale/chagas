@@ -158,21 +158,22 @@ class WfdbLoader():
         
         if verbose:
             from tqdm import tqdm
-            records_to_process = tqdm(records_to_process, desc="Loading records", unit="file")
+            records_to_process = tqdm(records_to_process, desc="Loading records", unit="record")
             
         for record in records_to_process:
             data, self._metadata = _load_wfdb_record(record)
 
-            if data is not None:
-                for filter_func in self._filters:
-                    data = filter_func(data)
-                
+            if data is not None:              
                 all_data.append(data)
                 all_labels.append(self._metadata.get(self._label))
         
         # Stack the data
         X_all = np.stack(all_data, axis=0)  # Shape: (n_files, n_samples, n_channels)
         y_all = np.array(all_labels)        # Shape: (n_files,)
+
+        for filter_func in self._filters:
+            X_all = filter_func(X_all)
+            
         return X_all, y_all
                 
 
