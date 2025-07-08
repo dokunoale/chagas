@@ -574,3 +574,46 @@ def plot_model_analysis(
     else:
         plt.show()
         return None
+    
+
+def plot_bento_analysis(model, X_test, y_test, y_test_info, history, threshold):
+    """
+    Combines the full report and model analysis into a single image for easy comparison.
+    
+    Args:
+        model: Trained model to evaluate.
+        X_test: Test input data.
+        y_test: True labels for the test data.
+        y_test_info: Additional information about the test samples (e.g., age, source).
+        history: Keras History object containing training metrics.
+        threshold: Threshold for binary classification.
+
+    Returns:
+        A PIL Image containing the combined analysis.
+
+    Example:
+        >>> img = plot_bento_analysis(model, X_test, y_test, y_test_info, history, threshold)
+        >>> display(img)
+    """
+    img1 = plot_full_report_and_metrics(model, X_test, y_test, history, threshold, return_pillow=True)
+    img2 = plot_model_analysis(model, X_test, y_test, y_test_info, threshold, return_pillow=True)
+
+    # 1. Resize img2 to match the height of img1, maintaining proportions
+    new_height = int(img1.height * 1.2)
+    new_width = int(img2.width * (new_height / img2.height))
+    img2_resized = img2.resize((new_width, new_height), Image.LANCZOS)
+
+    # 2. Create the new combined image
+    total_width = img1.width + img2_resized.width
+    max_height = max(img1.height, img2_resized.height)
+    new_img = Image.new('RGB', (total_width, max_height), color=(255, 255, 255))
+
+    # 3. Center img1 vertically (if img1 is shorter than max_height)
+    y_offset_img1 = (max_height - img1.height) // 2
+    y_offset_img2 = (max_height - img2_resized.height) // 2
+
+    new_img.paste(img1, (0, y_offset_img1))
+    new_img.paste(img2_resized, (img1.width, y_offset_img2))
+
+    # 4. Return the combined image
+    return new_img
