@@ -9,6 +9,7 @@ import matplotlib.gridspec as gridspec
 from sklearn.metrics import confusion_matrix, classification_report
 from io import StringIO
 import contextlib
+import seaborn as sns
 from .utils import compute_predictions
 
 
@@ -189,6 +190,30 @@ def plot_training_metrics(history):
         plt.legend()
 
     plt.tight_layout()
+    plt.show()
+
+
+def plot_confusion_matrix(y_test, y_pred_classes, class_names=None):
+    """
+    Plots a confusion matrix.
+
+    Args:
+        y_test: True labels.
+        y_pred_classes: Predicted labels.
+        class_names: List of class names for the axes. Defaults to ['Negative', 'Positive'].
+
+    Returns:
+        None. Displays the confusion matrix plot.
+    """
+    cm = confusion_matrix(y_test, y_pred_classes)
+
+    class_names = class_names or ['Negative', 'Positive']
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
+                xticklabels=class_names, yticklabels=class_names)
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.title('Confusion Matrix')
     plt.show()
 
 
@@ -428,7 +453,7 @@ def plot_age_histogram_percentage(ax, correct, ages, age_bins=None, age_step=5):
     
     # If there is no data, exit
     if not bin_centers:
-        ax.text(0.5, 0.5, 'Nessun dato disponibile', 
+        ax.text(0.5, 0.5, 'No data available', 
                 ha='center', va='center', transform=ax.transAxes)
         return ax
     
@@ -448,10 +473,10 @@ def plot_age_histogram_percentage(ax, correct, ages, age_bins=None, age_step=5):
                 f'{count}', ha='center', va='bottom', fontsize=9)
     
     # Formatting
-    ax.set_xlabel('Età', fontsize=12)
-    ax.set_ylabel('Percentuale di predizioni corrette (%)', fontsize=12)
-    ax.set_title('Tasso di successo delle predizioni per età', fontsize=14, pad=15)
-    ax.set_ylim(0, 105)  # Piccolo margine sopra il 100%
+    ax.set_xlabel('Age', fontsize=12)
+    ax.set_ylabel('Percentage of correct predictions (%)', fontsize=12)
+    ax.set_title('Prediction success rate by age', fontsize=14, pad=15)
+    ax.set_ylim(0, 105)  # Small margin above 100%
     ax.grid(True, alpha=0.3)
     
     # Improve the x-axis ticks - use only the bin centers that have data
@@ -460,7 +485,7 @@ def plot_age_histogram_percentage(ax, correct, ages, age_bins=None, age_step=5):
         # Create labels only for bins with data
         labels = []
         for center in bin_centers:
-            # Trova l'indice del bin corrispondente
+            # Find the index of the corresponding bin
             bin_idx = None
             for i in range(len(age_bins) - 1):
                 if abs(center - (age_bins[i] + age_bins[i+1])/2) < 0.1:
@@ -561,7 +586,7 @@ def plot_model_analysis(
     ax4.set_xlabel("Model Output Value")
 
     ax5 = fig.add_subplot(gs[3])
-    plot_age_histogram_percentage(ax5, y_pred, correct, ages, age_bins=bins, age_step=2)
+    plot_age_histogram_percentage(ax5, y_pred, correct, ages, age_step=2)
 
     plt.tight_layout()
 
