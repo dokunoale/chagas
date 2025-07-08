@@ -1,6 +1,15 @@
 import tensorflow as tf
 import keras
 
+@tf.keras.utils.register_keras_serializable()
+class TemporalMeanPooling(tf.keras.layers.Layer):
+    def call(self, inputs):
+        return tf.reduce_mean(inputs, axis=2)
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0], input_shape[1], input_shape[3])
+    
+
 @keras.saving.register_keras_serializable()
 class LogSpectrogram(tf.keras.layers.Layer):
     def __init__(self, frame_length=64, frame_step=32, fft_length=64, scale=1000.0, **kwargs):
