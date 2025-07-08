@@ -414,7 +414,7 @@ def plot_age_histogram_stacked(ax, correct, ages, age_bins=None, age_step=5):
     return ax
 
 
-def plot_age_histogram_percentage(ax, correct, ages, age_bins=None, age_step=5):
+def plot_age_histogram_percentage(ax, correct, ages, age_bins=None, step=5):
     """
     Create a histogram showing the percentage of correct predictions by age group.
 
@@ -423,14 +423,14 @@ def plot_age_histogram_percentage(ax, correct, ages, age_bins=None, age_step=5):
         correct: Boolean array indicating whether predictions are correct.
         ages: Array of ages corresponding to the predictions.
         age_bins: Array of bin edges for the age groups. If None, uses age_step.
-        age_step: Step size for age groups if age_bins is None (default is 5).
+        step: Step size for age groups if age_bins is None (default is 5).
     """
     
     # Create bins for age if not provided
     if age_bins is None:
         min_age = min(ages) if ages else 0
         max_age = max(ages) if ages else 100
-        age_bins = np.arange(min_age, max_age + age_step, age_step)
+        age_bins = np.arange(min_age, max_age + step, step)
     
     # Calculate the percentages for each age bin
     bin_centers = []
@@ -461,7 +461,7 @@ def plot_age_histogram_percentage(ax, correct, ages, age_bins=None, age_step=5):
     if len(bin_centers) > 1:
         bar_width = (bin_centers[1] - bin_centers[0]) * 0.8
     else:
-        bar_width = age_step * 0.8
+        bar_width = step * 0.8
         
     bars = ax.bar(bin_centers, success_rates, width=bar_width, 
                   color='steelblue', alpha=0.7, edgecolor='white', linewidth=0.5)
@@ -582,11 +582,11 @@ def plot_model_analysis(
     gs_age = gs[2].subgridspec(2, 1, hspace=0.5)
     ax3 = fig.add_subplot(gs_age[0])
     ax4 = fig.add_subplot(gs_age[1], sharex=ax3)
-    plot_age_distribution(ax3, ax4, y_pred, correct, ages, bins, normalize=False)
+    plot_age_distribution(ax3, ax4, y_pred, correct, ages, bins, age_step=10, normalize=False)
     ax4.set_xlabel("Output del modello")
 
     ax5 = fig.add_subplot(gs[3])
-    plot_age_histogram_percentage(ax5, correct, ages, age_step=10)
+    plot_age_histogram_percentage(ax5, correct, ages, step=5)
 
     plt.tight_layout()
 
