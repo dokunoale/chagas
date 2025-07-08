@@ -460,3 +460,50 @@ def display_all_heatmaps_on_spectrogram(spectrogram, heatmaps, cols=8, alpha=0.4
 
     plt.tight_layout()
     plt.show()
+
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import brier_score_loss, confusion_matrix, accuracy_score
+import numpy as np
+import matplotlib.pyplot as plt
+
+def fit_probability_calibrator(y_pred_raw, y_true):
+    """
+    Fits a logistic regression model to calibrate the raw output of a classifier.
+
+    Args:
+        y_pred_raw (array-like): Raw model outputs (e.g., logits or uncalibrated probabilities).
+        y_true (array-like): Ground truth binary labels (0 or 1).
+
+    Returns:
+        function: A calibrator function that maps raw outputs to calibrated probabilities.
+    """
+    clf = LogisticRegression()
+    clf.fit(y_pred_raw.reshape(-1, 1), y_true)
+
+    def calibrator(x):
+        """Applies the learned calibration model to new raw outputs."""
+        x = np.array(x).reshape(-1, 1)
+        return clf.predict_proba(x)[:, 1]
+
+    return calibrator
+
+def plot_calibration_curve(calibrator, x_raw):
+    """
+    Plots the calibration curve: raw model outputs vs. calibrated probabilities.
+
+    Args:
+        calibrator (function): A function that maps raw outputs to calibrated probabilities.
+        x_raw (array-like): Raw model outputs (uncalibrated).
+    """
+    x_sorted = np.sort(x_raw)
+    y_calibrated = calibrator(x_sorted)
+
+    plt.plot(x_sorted, y_calibrated, label="Calibrated probability", color='blue')
+    plt.plot([0, 1], [0, 1], '--', color='gray', label="Ideal (identity)")
+    plt.xlabel("Raw model output")
+    plt.ylabel("Calibrated probability")
+    plt.title("Calibration Curve")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
