@@ -560,7 +560,7 @@ def plot_model_analysis(
     Returns:
         If return_pillow is True, returns a PIL Image of the plot. Otherwise, displays the plot.
     """
-    y_pred, _, correct = compute_predictions(model, X_test, y_test, threshold)
+    y_pred, y_pred_class, correct = compute_predictions(model, X_test, y_test, threshold)
 
     for i, info in enumerate(y_test_info):
         info['Chagas'] = int(y_test[i])
@@ -583,10 +583,10 @@ def plot_model_analysis(
     ax3 = fig.add_subplot(gs_age[0])
     ax4 = fig.add_subplot(gs_age[1], sharex=ax3)
     plot_age_distribution(ax3, ax4, y_pred, correct, ages, bins, normalize=False)
-    ax4.set_xlabel("Model Output Value")
+    ax4.set_xlabel("Output del modello")
 
     ax5 = fig.add_subplot(gs[3])
-    plot_age_histogram_percentage(ax5, y_pred, correct, ages, age_step=2)
+    plot_age_histogram_percentage(ax5, y_pred_class, correct, ages, age_step=2)
 
     plt.tight_layout()
 
