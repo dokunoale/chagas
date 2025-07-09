@@ -586,7 +586,7 @@ def plot_model_analysis(
     ax4.set_xlabel("Output del modello")
 
     ax5 = fig.add_subplot(gs[3])
-    plot_age_histogram_percentage(ax5, correct, ages, step=5)
+    plot_age_histogram_percentage(ax5, correct, ages, step=10)
 
     plt.tight_layout()
 
