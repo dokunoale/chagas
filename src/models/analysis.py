@@ -9,9 +9,31 @@ import matplotlib.gridspec as gridspec
 from sklearn.metrics import confusion_matrix, classification_report
 from io import StringIO
 import contextlib
-from .utils import find_optimal_threshold
+import seaborn as sns
+from .utils import compute_predictions
+
 
 def plot_full_report_and_metrics(model, X, y, history, threshold, class_names=["Neg", "Pos"], return_pillow=False):
+    """
+    Display a comprehensive report of the model's performance including:
+    - Confusion Matrix
+    - Classification Report
+    - Model Summary
+    - Training History (Accuracy, AUC, Loss)
+
+    Args:
+        model: Keras model to evaluate.
+        X: Input features for prediction.
+        y: True labels for the input features.
+        history: Keras History object containing training metrics.
+        threshold: Threshold for binary classification.
+        class_names: List of class names for the confusion matrix.
+        return_pillow: If True, returns a PIL Image instead of displaying the plot.
+
+    Returns:
+        If return_pillow is True, returns a PIL Image of the plot.
+        Otherwise, displays the plot.
+    """
     y_pred_probs = model.predict(X)
     y_pred = (y_pred_probs > threshold).astype("int32")
 
@@ -114,52 +136,118 @@ def plot_full_report_and_metrics(model, X, y, history, threshold, class_names=["
         return None
 
 
-def compute_predictions(model, X_test, y_test, threshold):
-    y_pred = model.predict(X_test).flatten()
-    y_pred_class = (y_pred >= threshold).astype(int)
-    correct = (y_pred_class == y_test)
-    return y_pred, y_pred_class, correct
+def plot_training_metrics(history):
+    """
+    Display training metrics from the Keras History object. Incudes plots for:
+    - Accuracy
+    - AUC
+    - Loss
 
-def extract_labels(y_test_info, *label_keys):
-    """Estrae tuple di etichette dai dizionari y_test_info."""
-    return [tuple(info[key] for key in label_keys) for info in y_test_info]
+    Args:
+        history: Keras History object containing training metrics.
+
+    Returns:
+        None. Displays the plots directly.
+    """
+    acc = history.history.get('accuracy')
+    val_acc = history.history.get('val_accuracy')
+    auc = history.history.get('auc')
+    val_auc = history.history.get('val_auc')
+    loss = history.history.get('loss')
+    val_loss = history.history.get('val_loss')
+    epochs = range(1, len(acc) + 1) if acc else range(1, len(loss) + 1)
+
+    plt.figure(figsize=(18, 5))
+
+    # Plot Accuracy
+    if acc and val_acc:
+        plt.subplot(1, 3, 1)
+        plt.plot(epochs, acc, 'bo-', label='Training Accuracy')
+        plt.plot(epochs, val_acc, 'ro-', label='Validation Accuracy')
+        plt.title('Accuracy')
+        plt.xlabel('Epochs')
+        plt.ylabel('Accuracy')
+        plt.legend()
+
+    # Plot AUC
+    if auc and val_auc:
+        plt.subplot(1, 3, 2)
+        plt.plot(epochs, auc, 'bo-', label='Training AUC')
+        plt.plot(epochs, val_auc, 'ro-', label='Validation AUC')
+        plt.title('AUC')
+        plt.xlabel('Epochs')
+        plt.ylabel('AUC')
+        plt.legend()
+
+    # Plot Loss
+    if loss and val_loss:
+        plt.subplot(1, 3, 3)
+        plt.plot(epochs, loss, 'bo-', label='Training Loss')
+        plt.plot(epochs, val_loss, 'ro-', label='Validation Loss')
+        plt.title('Loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_confusion_matrix(y_test, y_pred_classes, class_names=None):
+    """
+    Plots a confusion matrix.
+
+    Args:
+        y_test: True labels.
+        y_pred_classes: Predicted labels.
+        class_names: List of class names for the axes. Defaults to ['Negative', 'Positive'].
+
+    Returns:
+        None. Displays the confusion matrix plot.
+    """
+    cm = confusion_matrix(y_test, y_pred_classes)
+
+    class_names = class_names or ['Negative', 'Positive']
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
+                xticklabels=class_names, yticklabels=class_names)
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.title('Confusion Matrix')
+    plt.show()
+
 
 def plot_correct_incorrect_histogram(ax, y_pred, correct, bins, threshold):
-    ax.hist(y_pred[correct], bins=bins, color='blue', alpha=0.6, label='Corrette')
-    ax.hist(y_pred[~correct], bins=bins, color='red', alpha=0.6, label='Sbagliate')
-    ax.axvline(threshold, color='gray', linestyle='--', label=f'Soglia {threshold:.2f}')
-    ax.set_ylabel("Frequenza")
-    ax.set_title("Distribuzione delle predizioni - corrette vs sbagliate")
+    """
+    Plots a histogram showing the distribution of correct and incorrect predictions.
+
+    Args:
+        ax: Matplotlib axis to plot on.
+        y_pred: Array of model predictions.
+        correct: Boolean array indicating whether predictions are correct.
+        bins: Array of bin edges for the histogram.
+        threshold: Threshold value for classification.
+    """
+    ax.hist(y_pred[correct], bins=bins, color='blue', alpha=0.6, label='Correct')
+    ax.hist(y_pred[~correct], bins=bins, color='red', alpha=0.6, label='Incorrect')
+    ax.axvline(threshold, color='gray', linestyle='--', label=f'Threshold {threshold:.2f}')
+    ax.set_ylabel("Frequency")
+    ax.set_title("Distribution of Predictions - Correct vs Incorrect")
     ax.legend()
     ax.grid(True)
-
-def build_grouped_counts(y_pred, bins, label_tuples):
-    bin_indices = np.digitize(y_pred, bins) - 1
-    unique_labels = sorted(set(label_tuples))
-    counts_by_group = {label: np.zeros(len(bins)) for label in unique_labels}
     
-    for idx, bin_idx in enumerate(bin_indices):
-        if 0 <= bin_idx < len(bins):
-            counts_by_group[label_tuples[idx]][bin_idx] += 1
-            
-    return counts_by_group, unique_labels
-
-def get_color_map(unique_labels, base_key_index=1):
-    """Restituisce una mappa di colori per le label, usando un colore base per una chiave principale."""
-    # Estrai chiavi base (es. source)
-    base_keys = sorted(set(label[base_key_index] for label in unique_labels))
-    base_colors = plt.cm.Set3(np.linspace(0, 1, len(base_keys)))
-    base_color_map = {key: base_colors[i] for i, key in enumerate(base_keys)}
-
-    # Colori finali per le label complete
-    color_map = {}
-    for label in unique_labels:
-        base_color = base_color_map[label[base_key_index]]
-        alpha = 1.0 if label[0] == 1 else 0.6  # es. chagas = 1 -> opaco
-        color_map[label] = mcolors.to_rgba(base_color, alpha=alpha)
-    return color_map
 
 def plot_grouped_histogram(ax, bins, counts_by_group, color_map, label_format=str):
+    """
+    Plots a grouped histogram with stacked bars for each group.
+
+    Args:
+        ax: Matplotlib axis to plot on.
+        bins: Array of bin edges for the histogram.
+        counts_by_group: Dictionary where keys are group labels and values are counts in each bin.
+        color_map: Dictionary mapping group labels to colors.
+        label_format: Function to format the group labels for the legend.
+    """
     bottom = np.zeros(len(bins))
     for label in counts_by_group:
         counts = counts_by_group[label]
@@ -173,43 +261,35 @@ def plot_grouped_histogram(ax, bins, counts_by_group, color_map, label_format=st
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     ax.grid(True)
 
-# Funzione helper: assegna età ai bin
+
 def bin_age_groups(ages, step=5, max_age=100):
+    """Bins ages into groups of a specified step size."""
     bins = np.arange(0, max_age + step, step)
     labels = [f"{i}-{i+step-1}" for i in bins[:-1]]
     bin_indices = np.digitize(ages, bins) - 1
     bin_indices = np.clip(bin_indices, 0, len(labels)-1)
     return bin_indices, labels
 
-# Plot dell'età
 def plot_age_distribution(ax_correct, ax_wrong, y_pred, correct, ages, bins_output, 
                          age_step=5, normalize=True):
     """
-    Crea un grafico a barre impilate della distribuzione dell'età per predizioni corrette/sbagliate
-    
-    Parameters:
-    -----------
-    ax_correct, ax_wrong : matplotlib axes
-        Gli assi su cui plottare
-    y_pred : array-like
-        Predizioni del modello
-    correct : array-like
-        Array booleano che indica se le predizioni sono corrette
-    ages : array-like
-        Età dei partecipanti
-    bins_output : array-like
-        Bin per l'output del modello
-    age_step : int, default=5
-        Passo per i gruppi di età
-    normalize : bool, default=True
-        Se True, normalizza le distribuzioni per riga (percentuali)
-        Se False, mostra i conteggi assoluti
+    Creates a stacked bar chart of age distribution for correct/incorrect predictions.
+
+    Args:
+        ax_correct: Matplotlib axis for correct predictions.
+        ax_wrong: Matplotlib axis for incorrect predictions.
+        y_pred: Array of model predictions.
+        correct: Boolean array indicating whether predictions are correct.
+        ages: Array of ages corresponding to the predictions.
+        bins_output: Array of bin edges for the output values.
+        age_step: Step size for age groups (default is 5).
+        normalize: If True, normalizes the counts to percentages.
     """
     max_age = max(ages) if ages else 100
     age_bin_indices, age_labels = bin_age_groups(ages, step=age_step, max_age=max_age)
     n_age_bins = len(age_labels)
     
-    # Prepara matrici [n_output_bins x n_age_bins]
+    # Prepare bins for output values [n_output_bins x n_age_bins]
     bin_indices = np.digitize(y_pred, bins_output) - 1
     age_distribution_correct = np.zeros((len(bins_output), n_age_bins))
     age_distribution_wrong = np.zeros((len(bins_output), n_age_bins))
@@ -222,7 +302,7 @@ def plot_age_distribution(ax_correct, ax_wrong, y_pred, correct, ages, bins_outp
             else:
                 age_distribution_wrong[bin_idx, age_bin] += 1
 
-    # Normalizza per riga (somma a 100%) se richiesto
+    # If required, display the plot as percentage
     if normalize:
         def normalize_rows(mat):
             row_sums = mat.sum(axis=1, keepdims=True)
@@ -231,7 +311,7 @@ def plot_age_distribution(ax_correct, ax_wrong, y_pred, correct, ages, bins_outp
         age_distribution_correct = normalize_rows(age_distribution_correct)
         age_distribution_wrong = normalize_rows(age_distribution_wrong)
 
-    # Gradiente di colori per età
+    # Color gradient for age bins
     cmap = plt.colormaps.get_cmap('viridis').resampled(n_age_bins)
     colors = [cmap(i) for i in range(n_age_bins)]
 
@@ -239,9 +319,9 @@ def plot_age_distribution(ax_correct, ax_wrong, y_pred, correct, ages, bins_outp
         bottom = np.zeros(len(bins_output))
         bars = []
         
-        # Calcola la larghezza delle barre - riempi completamente lo spazio
+        # Compute the width of the bars
         if len(bins_output) > 1:
-            bar_width = bins_output[1] - bins_output[0]  # Larghezza completa
+            bar_width = bins_output[1] - bins_output[0]  # Full width
         else:
             bar_width = 1.0
         
@@ -253,86 +333,78 @@ def plot_age_distribution(ax_correct, ax_wrong, y_pred, correct, ages, bins_outp
             bars.append(bar)
             bottom += matrix[:, age_idx]
         
-        # Imposta i limiti e le etichette
+        # Set the y-axis limits and labels
         if normalize:
             ax.set_ylim(0, 100)
-            ax.set_ylabel("Percentuale (%)")
+            ax.set_ylabel("Percentage (%)")
         else:
-            ax.set_ylim(0, np.max(bottom) * 1.1)  # Aggiungi un po' di spazio sopra
-            ax.set_ylabel("Conteggio")
+            ax.set_ylim(0, np.max(bottom) * 1.1)
+            ax.set_ylabel("Count")
         
         ax.set_title(title, fontsize=12, pad=10)
         ax.grid(True, alpha=0.3)
         
-        # Imposta i limiti dell'asse x per valori continui
+        # Set the x-axis limits and ticks
         ax.set_xlim(bins_output[0] - bar_width/2, bins_output[-1] + bar_width/2)
         
-        # Imposta i tick dell'asse x
         if len(bins_output) <= 10:
             ax.set_xticks(bins_output)
         else:
-            # Se ci sono troppi bin, mostra solo alcuni tick
+            # If there are many bins, reduce the number of ticks
             step = max(1, len(bins_output) // 10)
             ax.set_xticks(bins_output[::step])
         
         return bars
 
-    # Crea i grafici
+    # Plot the stacked bar charts for correct and wrong predictions
     bars_correct = plot_stack(ax_correct, age_distribution_correct, 
-                             "Distribuzione età - predizioni corrette")
+                             "Age Distribution - Correct Predictions")
     bars_wrong = plot_stack(ax_wrong, age_distribution_wrong, 
-                           "Distribuzione età - predizioni sbagliate")
+                           "Age Distribution - Incorrect Predictions")
     
-    # Aggiungi la legenda al grafico superiore, posizionata meglio
+    # Add legends
     ax_correct.legend(bbox_to_anchor=(1.00, 1), loc='upper left', 
-                     title="Fasce d'età", fontsize=9, title_fontsize=10)
+                     title="Age Groups", fontsize=9, title_fontsize=10)
     
     return bars_correct, bars_wrong
 
-def plot_age_histogram_stacked(ax, y_pred, correct, ages, age_bins=None, age_step=5):
+
+def plot_age_histogram_stacked(ax, correct, ages, age_bins=None, age_step=5):
     """
-    Crea un istogramma impilato con l'età sull'asse X
-    
-    Parameters:
-    -----------
-    ax : matplotlib axis
-        L'asse su cui plottare
-    y_pred : array-like
-        Predizioni del modello
-    correct : array-like
-        Array booleano che indica se le predizioni sono corrette
-    ages : array-like
-        Età dei partecipanti
-    age_bins : array-like, optional
-        Bin personalizzati per l'età. Se None, usa age_step
-    age_step : int, default=5
-        Passo per i gruppi di età se age_bins è None
+    Create a stacked histogram of age distribution for correct and incorrect predictions.
+
+    Args:
+        ax: Matplotlib axis to plot on.
+        correct: Boolean array indicating whether predictions are correct.
+        ages: Array of ages corresponding to the predictions.
+        age_bins: Array of bin edges for the age groups. If None, uses age_step.
+        age_step: Step size for age groups if age_bins is None (default is 5).
     """
     
-    # Crea i bin per l'età se non forniti
+    # Create bins for age if not provided
     if age_bins is None:
         min_age = min(ages) if ages else 0
         max_age = max(ages) if ages else 100
         age_bins = np.arange(min_age, max_age + age_step, age_step)
     
-    # Separa le età per predizioni corrette e sbagliate
+    # Separate ages for correct and incorrect predictions
     ages_correct = [ages[i] for i in range(len(ages)) if correct[i]]
     ages_wrong = [ages[i] for i in range(len(ages)) if not correct[i]]
     
-    # Crea l'istogramma impilato
+    # Create the stacked histogram
     ax.hist([ages_wrong, ages_correct], bins=age_bins, 
             color=['red', 'green'], alpha=0.7,
-            label=['Predizioni sbagliate', 'Predizioni corrette'],
+            label=['Incorrect Predictions', 'Correct Predictions'],
             edgecolor='white', linewidth=0.5, stacked=True)
     
-    # Formattazione
-    ax.set_xlabel('Età', fontsize=12)
-    ax.set_ylabel('Numero di predizioni', fontsize=12)
-    ax.set_title('Distribuzione delle predizioni per età (impilato)', fontsize=14, pad=15)
+    # Formatting
+    ax.set_xlabel('Age', fontsize=12)
+    ax.set_ylabel('Number of Predictions', fontsize=12)
+    ax.set_title('Age Distribution of Predictions (Stacked)', fontsize=14, pad=15)
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
     
-    # Migliora i tick dell'asse x
+    # Improve x-axis ticks
     if len(age_bins) <= 15:
         ax.set_xticks(age_bins)
     else:
@@ -341,40 +413,32 @@ def plot_age_histogram_stacked(ax, y_pred, correct, ages, age_bins=None, age_ste
     
     return ax
 
-# Versione con percentuali
-def plot_age_histogram_percentage(ax, y_pred, correct, ages, age_bins=None, age_step=5):
+
+def plot_age_histogram_percentage(ax, correct, ages, age_bins=None, step=5):
     """
-    Crea un istogramma con percentuali di successo per età
-    
-    Parameters:
-    -----------
-    ax : matplotlib axis
-        L'asse su cui plottare
-    y_pred : array-like
-        Predizioni del modello
-    correct : array-like
-        Array booleano che indica se le predizioni sono corrette
-    ages : array-like
-        Età dei partecipanti
-    age_bins : array-like, optional
-        Bin personalizzati per l'età. Se None, usa age_step
-    age_step : int, default=5
-        Passo per i gruppi di età se age_bins è None
+    Create a histogram showing the percentage of correct predictions by age group.
+
+    Args:
+        ax: Matplotlib axis to plot on.
+        correct: Boolean array indicating whether predictions are correct.
+        ages: Array of ages corresponding to the predictions.
+        age_bins: Array of bin edges for the age groups. If None, uses age_step.
+        step: Step size for age groups if age_bins is None (default is 5).
     """
     
-    # Crea i bin per l'età se non forniti
+    # Create bins for age if not provided
     if age_bins is None:
         min_age = min(ages) if ages else 0
         max_age = max(ages) if ages else 100
-        age_bins = np.arange(min_age, max_age + age_step, age_step)
+        age_bins = np.arange(min_age, max_age + step, step)
     
-    # Calcola le percentuali per ogni bin di età
+    # Calculate the percentages for each age bin
     bin_centers = []
     success_rates = []
     total_counts = []
     
     for i in range(len(age_bins) - 1):
-        # Trova gli indici delle persone in questo bin di età
+        # Find the indices of people in this age bin
         in_bin = [(ages[j] >= age_bins[i] and ages[j] < age_bins[i+1]) 
                   for j in range(len(ages))]
         
@@ -387,41 +451,41 @@ def plot_age_histogram_percentage(ax, y_pred, correct, ages, age_bins=None, age_
             success_rates.append(success_rate)
             total_counts.append(total_count)
     
-    # Se non ci sono dati, esci
+    # If there is no data, exit
     if not bin_centers:
-        ax.text(0.5, 0.5, 'Nessun dato disponibile', 
+        ax.text(0.5, 0.5, 'No data available', 
                 ha='center', va='center', transform=ax.transAxes)
         return ax
     
-    # Crea il grafico a barre
+    # Create the bar chart
     if len(bin_centers) > 1:
         bar_width = (bin_centers[1] - bin_centers[0]) * 0.8
     else:
-        bar_width = age_step * 0.8
+        bar_width = step * 0.8
         
     bars = ax.bar(bin_centers, success_rates, width=bar_width, 
                   color='steelblue', alpha=0.7, edgecolor='white', linewidth=0.5)
     
-    # Aggiungi etichette con il numero totale di campioni
+    # Add labels with the total number of samples
     for bar, count in zip(bars, total_counts):
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2., height + 1,
                 f'{count}', ha='center', va='bottom', fontsize=9)
     
-    # Formattazione
-    ax.set_xlabel('Età', fontsize=12)
-    ax.set_ylabel('Percentuale di predizioni corrette (%)', fontsize=12)
-    ax.set_title('Tasso di successo delle predizioni per età', fontsize=14, pad=15)
-    ax.set_ylim(0, 105)  # Piccolo margine sopra il 100%
+    # Formatting
+    ax.set_xlabel('Age', fontsize=12)
+    ax.set_ylabel('Percentage of correct predictions (%)', fontsize=12)
+    ax.set_title('Prediction success rate by age', fontsize=14, pad=15)
+    ax.set_ylim(0, 105)  # Small margin above 100%
     ax.grid(True, alpha=0.3)
     
-    # Migliora i tick dell'asse x - usa solo i bin centers che hanno dati
+    # Improve the x-axis ticks - use only the bin centers that have data
     if len(bin_centers) > 0:
         ax.set_xticks(bin_centers)
-        # Crea le etichette solo per i bin con dati
+        # Create labels only for bins with data
         labels = []
         for center in bin_centers:
-            # Trova l'indice del bin corrispondente
+            # Find the index of the corresponding bin
             bin_idx = None
             for i in range(len(age_bins) - 1):
                 if abs(center - (age_bins[i] + age_bins[i+1])/2) < 0.1:
@@ -436,6 +500,38 @@ def plot_age_histogram_percentage(ax, y_pred, correct, ages, age_bins=None, age_
     
     return ax
 
+
+def extract_labels(y_test_info, *label_keys):
+    """Extracts tuples of labels from the y_test_info dictionaries."""
+    return [tuple(info[key] for key in label_keys) for info in y_test_info]
+
+def build_grouped_counts(y_pred, bins, label_tuples):
+    """ Creates a dictionary of counts for each label group in the specified bins. """
+    bin_indices = np.digitize(y_pred, bins) - 1
+    unique_labels = sorted(set(label_tuples))
+    counts_by_group = {label: np.zeros(len(bins)) for label in unique_labels}
+    
+    for idx, bin_idx in enumerate(bin_indices):
+        if 0 <= bin_idx < len(bins):
+            counts_by_group[label_tuples[idx]][bin_idx] += 1
+            
+    return counts_by_group, unique_labels
+
+def get_color_map(unique_labels, base_key_index=1):
+    """Returns a color map for the labels, using a base color for a primary key."""
+    # Extract base keys (e.g., source)
+    base_keys = sorted(set(label[base_key_index] for label in unique_labels))
+    base_colors = plt.cm.Set3(np.linspace(0, 1, len(base_keys)))
+    base_color_map = {key: base_colors[i] for i, key in enumerate(base_keys)}
+
+    # Final colors for the complete labels
+    color_map = {}
+    for label in unique_labels:
+        base_color = base_color_map[label[base_key_index]]
+        alpha = 1.0 if label[0] == 1 else 0.6  # e.g., chagas = 1 -> opaque
+        color_map[label] = mcolors.to_rgba(base_color, alpha=alpha)
+    return color_map
+
 def plot_model_analysis(
     model,
     X_test,
@@ -447,6 +543,23 @@ def plot_model_analysis(
     label_format=lambda l: f"Chagas={l[0]}, {l[1]}",
     return_pillow=False
 ):
+    """
+    Analyzes the model's predictions and visualizes various metrics and distributions.
+
+    Args:
+        model: Trained model to evaluate.
+        X_test: Test input data.
+        y_test: True labels for the test data.
+        y_test_info: Additional information about the test samples (e.g., age, source).
+        threshold: Threshold for binary classification.
+        bins: Array of bin edges for histograms.
+        label_keys: Keys to extract labels from y_test_info for grouping.
+        label_format: Function to format labels for the legend.
+        return_pillow: If True, returns a PIL Image of the plot; otherwise, displays the plot.
+
+    Returns:
+        If return_pillow is True, returns a PIL Image of the plot. Otherwise, displays the plot.
+    """
     y_pred, y_pred_class, correct = compute_predictions(model, X_test, y_test, threshold)
 
     for i, info in enumerate(y_test_info):
@@ -469,11 +582,11 @@ def plot_model_analysis(
     gs_age = gs[2].subgridspec(2, 1, hspace=0.5)
     ax3 = fig.add_subplot(gs_age[0])
     ax4 = fig.add_subplot(gs_age[1], sharex=ax3)
-    plot_age_distribution(ax3, ax4, y_pred, correct, ages, bins, normalize=False)
+    plot_age_distribution(ax3, ax4, y_pred, correct, ages, bins, age_step=10, normalize=False)
     ax4.set_xlabel("Output del modello")
 
     ax5 = fig.add_subplot(gs[3])
-    plot_age_histogram_percentage(ax5, y_pred, correct, ages, age_step=2)
+    plot_age_histogram_percentage(ax5, correct, ages, step=5)
 
     plt.tight_layout()
 
@@ -486,3 +599,46 @@ def plot_model_analysis(
     else:
         plt.show()
         return None
+    
+
+def plot_bento_analysis(model, X_test, y_test, y_test_info, history, threshold):
+    """
+    Combines the full report and model analysis into a single image for easy comparison.
+    
+    Args:
+        model: Trained model to evaluate.
+        X_test: Test input data.
+        y_test: True labels for the test data.
+        y_test_info: Additional information about the test samples (e.g., age, source).
+        history: Keras History object containing training metrics.
+        threshold: Threshold for binary classification.
+
+    Returns:
+        A PIL Image containing the combined analysis.
+
+    Example:
+        >>> img = plot_bento_analysis(model, X_test, y_test, y_test_info, history, threshold)
+        >>> display(img)
+    """
+    img1 = plot_full_report_and_metrics(model, X_test, y_test, history, threshold, return_pillow=True)
+    img2 = plot_model_analysis(model, X_test, y_test, y_test_info, threshold, return_pillow=True)
+
+    # 1. Resize img2 to match the height of img1, maintaining proportions
+    new_height = int(img1.height * 1.2)
+    new_width = int(img2.width * (new_height / img2.height))
+    img2_resized = img2.resize((new_width, new_height), Image.LANCZOS)
+
+    # 2. Create the new combined image
+    total_width = img1.width + img2_resized.width
+    max_height = max(img1.height, img2_resized.height)
+    new_img = Image.new('RGB', (total_width, max_height), color=(255, 255, 255))
+
+    # 3. Center img1 vertically (if img1 is shorter than max_height)
+    y_offset_img1 = (max_height - img1.height) // 2
+    y_offset_img2 = (max_height - img2_resized.height) // 2
+
+    new_img.paste(img1, (0, y_offset_img1))
+    new_img.paste(img2_resized, (img1.width, y_offset_img2))
+
+    # 4. Return the combined image
+    return new_img
