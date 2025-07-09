@@ -256,8 +256,8 @@ def plot_grouped_histogram(ax, bins, counts_by_group, color_map, label_format=st
                label=label_format(label), color=color, align='center',
                edgecolor='white', linewidth=0.5)
         bottom += counts
-    ax.set_ylabel("Frequenza per gruppo")
-    ax.set_title("Distribuzione dei gruppi per valore di output")
+    ax.set_ylabel("Count per group")
+    ax.set_title("Distribution of groups by output value")
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     ax.grid(True)
 
