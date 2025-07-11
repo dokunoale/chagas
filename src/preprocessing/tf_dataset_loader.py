@@ -136,7 +136,11 @@ class WfdbLoader:
         
     def add_dataset(self, dataset_path):
         """ Add a dataset path to the loader. """
-        self._records.extend([os.path.join(dataset_path, f[:-4]) for f in os.listdir(dataset_path) if f.endswith(DAT_EXTENSION)])
+        self._records.extend([
+            os.path.join(dataset_path, f[:-4])
+            for f in sorted(os.listdir(dataset_path))
+            if f.endswith(DAT_EXTENSION)
+        ])
         return self
     
     def add_filter(self, filter_func):
