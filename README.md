@@ -1,5 +1,5 @@
-> **IT**                La relazione completa in italiano, che descrive l’intero progetto di Deep Learning per la rilevazione della malattia di Chagas da segnali ECG, è disponibile nel notebook:  
-> **ENG**               The complete report written in Italian, detailing the entire Deep Learning pipeline for Chagas disease detection from ECG signals, is available in the following notebook:  
+> **IT** → La relazione completa in italiano, che descrive l’intero progetto di Deep Learning per la rilevazione della malattia di Chagas da segnali ECG, è disponibile nel notebook:  
+> **ENG** → The complete report written in Italian, detailing the entire Deep Learning pipeline for Chagas disease detection from ECG signals, is available in the following notebook:  
 > [`notebooks/chagas_disease_detection.ipynb`](notebooks/chagas_disease_detection.ipynb)
 
 
