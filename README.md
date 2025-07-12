@@ -71,6 +71,6 @@ For a complete and in-depth overview of the project, please refer to the final r
 ## Contributors
 
  [@dokunoale](https://github.com/dokunoale)        
- [@giooooia](https://github.com/giooooia) 
+ [@giooooia](https://github.com/giooooia)                       
  [@vittoriapala](https://github.com/vittoriapala)  
   
