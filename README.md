@@ -1,4 +1,4 @@
-> **IT**    La relazione completa in italiano, che descrive l’intero progetto di Deep Learning per la rilevazione della malattia di Chagas da segnali ECG, è disponibile nel notebook:  
+**IT**    La relazione completa in italiano, che descrive l’intero progetto di Deep Learning per la rilevazione della malattia di Chagas da segnali ECG, è disponibile nel notebook:  
 > **ENG**   The complete report written in Italian, detailing the entire Deep Learning pipeline for Chagas disease detection from ECG signals, is available in the following notebook:  
 > [`notebooks/chagas_disease_detection.ipynb`](notebooks/chagas_disease_detection.ipynb)
 
@@ -28,6 +28,7 @@ This work aims to combine methodological rigor with potential biomedical applica
 
 ## Repository Structure
 
+```
 chagas/
 ┣ data/                                 → placeholder directory (currently empty, tracked via `.gitkeep`)
 ┣ notebooks/                            → model development notebooks, each containing full experiments: data loading, training, metric evaluation, and visualization
@@ -58,6 +59,7 @@ chagas/
 ┣ environment.yml                       → Conda environment file with all required dependencies
 ┣ main.py                               → Main entry point script (currently a placeholder)
 ┗ requirements.txt                      → Python packages and specific versions required via pip
+```
 
 
 
