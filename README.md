@@ -2,7 +2,7 @@
 > **ENG**   The complete report written in Italian, detailing the entire Deep Learning pipeline for Chagas disease detection from ECG signals, is available in the following notebook:  
 > [`notebooks/chagas_disease_detection.ipynb`](notebooks/chagas_disease_detection.ipynb)
 
----
+
 
 # Recurrent Convolutional Neural Network for Real World ECG Classification
 
@@ -10,7 +10,7 @@ This project leverages advanced Deep Learning techniques to automatically detect
 
 > Academic project developed at the University of Cagliari during the 2024/2025 academic year, as part of the Deep Learning course.
 
----
+
 
 ## Project Objectives
 
@@ -24,7 +24,7 @@ The main goal of this project is to develop a **binary classification model** th
 
 This work aims to combine methodological rigor with potential biomedical applicability, providing a generalizable and interpretable model that can serve as a foundation for future research in medical AI.
 
----
+
 
 ## Repository Structure
 
@@ -59,19 +59,12 @@ chagas/
 ┣ main.py                               → Main entry point script (currently a placeholder)
 ┗ requirements.txt                      → Python packages and specific versions required via pip
 
----
+
 
 ## Further Insights
 
 For a complete and in-depth overview of the project, please refer to the final report: [`notebooks/chagas_disease_detection.ipynb`](notebooks/chagas_disease_detection.ipynb).
 
----
-
-## Setup & Usage
-
-?TODO?
-
----
 
 ## Contributors
 
