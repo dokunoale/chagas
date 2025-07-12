@@ -9,24 +9,7 @@ import pandas as pd
 import sys
 import wfdb
 
-# Utils
-def is_integer(x):
-    try:
-        int(x)
-        return True
-    except:
-        return False
-
-def is_boolean(x):
-    return str(x).lower() in ['true', 'false', '1', '0']
-
-def sanitize_boolean_value(x):
-    if str(x).lower() in ['true', '1']:
-        return True
-    elif str(x).lower() in ['false', '0']:
-        return False
-    else:
-        raise ValueError(f'Invalid boolean value: {x}')
+from helper_code import is_integer, is_boolean, sanitize_boolean_value
 
 def get_parser():
     """ Create an argument parser for the preprocessing script. """
