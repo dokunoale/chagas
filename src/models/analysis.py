@@ -75,8 +75,8 @@ def plot_full_report_and_metrics(model, X, y, history, threshold, class_names=["
     for i in range(2):
         for j in range(2):
             ax2.text(j, i, format(cm[i, j], 'd'),
-                     ha="center", va="center",
-                     color="white" if cm[i, j] > cm.max()/2 else "black")
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > cm.max()/2 else "black")
 
     # --- [0, 1]: Model Summary ---
     ax1 = fig.add_subplot(outer_gs[0, 1])

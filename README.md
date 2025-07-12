@@ -11,6 +11,12 @@ This project leverages advanced Deep Learning techniques to automatically detect
 > Academic project developed at the University of Cagliari during the 2024/2025 academic year, as part of the Deep Learning course.
 
 
+## Challenge Reference
+
+This project is based on the [PhysioNet/Chagas Disease Detection Challenge 2025](https://moody-challenge.physionet.org/2025/).
+
+For the preprocessing scripts [`src/preprocessing/helper_code.py`](src/preprocessing/helper_code.py), [`src/preprocessing/preprocessing_CODE-15.py`](src/preprocessing/preprocessing_CODE-15.py), and [`src/preprocessing/preprocessing_SaMi-Trop.py`](src/preprocessing/preprocessing_SaMi-Trop.py), we primarily based our implementation on the official repository linked in the challenge ([PhysioNet/Chagas Disease Detection Challenge 2025](https://github.com/physionetchallenges/python-example-2025/blob/main/README.md)). We made only minor modifications to adapt the code to our project needs.
+
 
 ## Project Objectives
 
@@ -25,13 +31,13 @@ The main goal of this project is to develop a **binary classification model** th
 This work aims to combine methodological rigor with potential biomedical applicability, providing a generalizable and interpretable model that can serve as a foundation for future research in medical AI.
 
 
-
 ## Repository Structure
 
 ```
 chagas/
-┣ data/                                 → placeholder directory (currently empty, tracked via `.gitkeep`)
-┣ notebooks/                            → model development notebooks, each containing full experiments: data loading, training, metric evaluation, and visualization
+┣ data/                                 → placeholder directory (currently empty, for temp files)
+┣ keras/                                → keras files for stored models
+┣ notebooks/                            → model development notebooks, each containing full experiments: data loading, model definition, training, metric evaluation, and visualization
     ┣ assets/                           → images and figures used in the notebook report or documentation
     ┣ Bidirectional_RCNN.ipynb
     ┣ CNN_GRU..ipynb
@@ -52,7 +58,6 @@ chagas/
         ┣ preprocessing_CODE-15.py
         ┣ preprocessing_SaMi-Trop.py
         ┗ tf_dataset_loader.py
-┣ test/
 ┣ .gitignore                            → Git ignore rules 
 ┣ LICENSE                               → Project license file
 ┣ README.md                             → Project documentation (this file)
@@ -60,7 +65,6 @@ chagas/
 ┣ main.py                               → Main entry point script (currently a placeholder)
 ┗ requirements.txt                      → Python packages and specific versions required via pip
 ```
-
 
 
 ## Further Insights

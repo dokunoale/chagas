@@ -8,7 +8,7 @@ import pandas as pd
 import sys
 import wfdb
 
-from helper_code import is_integer, is_boolean, sanitize_boolean_value
+from helper_code import sanitize_boolean_value
 
 def get_parser():
     description = 'Prepare the CODE-15% dataset for the Challenge.'
