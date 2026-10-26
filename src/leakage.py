@@ -25,7 +25,6 @@ def nuisance_features(x, fs):
         return {"n_samples": len(x), "lead_zeros": lead, "trail_zeros": trail}
     p = ecg.psd(trimmed, fs, FREQS).mean(axis=1)
     total = np.nansum(p)
-    values = np.unique(trimmed)
     feats = {
         "n_samples": len(x),
         "lead_zeros": lead,
@@ -34,7 +33,6 @@ def nuisance_features(x, fs):
         "flat_run_s": ecg.longest_flat_run(trimmed) / fs,
         "abs_p99_mv": np.percentile(np.abs(trimmed), 99),
         "abs_median_mv": np.median(np.abs(trimmed)),
-        "log_quant_step": np.log10(np.diff(values).min()) if len(values) > 1 else np.nan,
         "lead_residual": np.std(trimmed[:, 2] - (trimmed[:, 1] - trimmed[:, 0])) / (np.std(trimmed[:, 1]) + 1e-9),
         "line_60hz": _line_ratio(FREQS, p, 60),
     }
