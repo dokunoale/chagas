@@ -1,0 +1,32 @@
+[project]
+name = "chagas"
+version = "0.1.0"
+description = "Recurrent Convolutional Neural Network for Chagas disease detection from multi-lead ECG"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "scipy>=1.13",
+    "h5py>=3.12",
+    "scikit-learn>=1.6",
+    "joblib>=1.4",
+    "wfdb>=4.1",
+    "tensorflow>=2.18",
+    "keras>=3.5",
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
+    "pillow>=10.4",
+    "tqdm>=4.66",
+    "gdown>=5.2",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29",
+]
+
+[tool.uv]
+# The code is used through sys.path / notebooks, not installed as a package
+package = false
