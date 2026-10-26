@@ -6,9 +6,9 @@ from sklearn.model_selection import StratifiedGroupKFold
 
 from src import ecg
 
-# Band edges in Hz for relative power; the last bands only exist above 300/400 Hz sampling
-BANDS = [(0, 0.5), (0.5, 5), (5, 15), (15, 40), (40, 100), (100, 150), (150, 200), (200, 250)]
-FREQS = np.arange(0, 250.01, 0.25)
+# Band edges in Hz for relative power; content above 150 Hz is lost at the 300 Hz of the hidden sets
+BANDS = [(0, 0.5), (0.5, 5), (5, 15), (15, 40), (40, 100), (100, 150), (150, 200)]
+FREQS = np.arange(0, 200.01, 0.25)
 
 
 def _line_ratio(freqs, p, f0, half_width=1.0):
@@ -36,7 +36,6 @@ def nuisance_features(x, fs):
         "abs_median_mv": np.median(np.abs(trimmed)),
         "log_quant_step": np.log10(np.diff(values).min()) if len(values) > 1 else np.nan,
         "lead_residual": np.std(trimmed[:, 2] - (trimmed[:, 1] - trimmed[:, 0])) / (np.std(trimmed[:, 1]) + 1e-9),
-        "line_50hz": _line_ratio(FREQS, p, 50),
         "line_60hz": _line_ratio(FREQS, p, 60),
     }
     for lo, hi in BANDS:
