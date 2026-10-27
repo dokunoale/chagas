@@ -4,7 +4,8 @@ import neurokit2 as nk
 import numpy as np
 from scipy import signal
 
-from src.preprocessing import LEADS
+from src.dataset import sources
+from src.preprocessing import LEADS, center_window, filtered
 
 SPECTRAL_BANDS = [(0.5, 5), (5, 15), (15, 40)]
 BEAT_WINDOW_S = (0.25, 0.45)  # before and after the R peak
@@ -23,8 +24,13 @@ def beats(x, rpeaks, fs):
     return np.stack([x[r - before:r + after] for r in rpeaks if r >= before and r + after <= len(x)])
 
 
+def from_raw(x):
+    """Features of a raw record, measured on the central window of the band-passed signal at 400 Hz."""
+    return ecg_features(center_window(filtered(x), sources.FS), sources.FS)
+
+
 def ecg_features(x, fs):
-    """Physiological features of a preprocessed record of shape (time, 8 leads).
+    """Physiological features of a band-passed record of shape (time, 8 leads).
 
     Rhythm and intervals come from lead II (neurokit2 R peaks and DWT delineation); amplitudes, axis
     and terminal QRS forces from the median beat. Missing values are NaN.

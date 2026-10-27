@@ -15,7 +15,7 @@ LEADS = ["I", "II", "V1", "V2", "V3", "V4", "V5", "V6"]
 LEAD_IDX = [sources.LEADS.index(lead) for lead in LEADS]
 
 BAND = (0.5, 40.0)
-FS = 100
+FS = 80  # Nyquist at the 40 Hz cut-off: nothing above the band survives
 WINDOW_S = 7.0
 MAX_FLAT_S = 0.5
 AGE_CAP = 90
@@ -81,8 +81,15 @@ def center_window(x, fs, seconds=WINDOW_S):
     return x[start:start + n]
 
 
+def filtered(x):
+    """Raw record -> 8 independent leads, band-passed at the original rate, whole trimmed record."""
+    return bandpass(ecg.trim_zero_padding(x)[:, LEAD_IDX], sources.FS)
+
+
 def preprocess(x):
-    """Raw record -> 8 independent leads, band-passed, resampled to FS, central WINDOW_S window: (700, 8)."""
-    x = bandpass(ecg.trim_zero_padding(x)[:, LEAD_IDX], sources.FS)
-    x = signal.resample_poly(x, FS, sources.FS, axis=0)
+    """Raw record -> filtered, resampled to FS, central WINDOW_S window: (560, 8).
+
+    Resampling the whole record before windowing keeps the edge effects out of the window.
+    """
+    x = signal.resample_poly(filtered(x), FS, sources.FS, axis=0)
     return center_window(x, FS).astype(np.float32)
